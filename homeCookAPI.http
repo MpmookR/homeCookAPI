@@ -1,0 +1,6 @@
+@homeCookAPI_HostAddress = http://localhost:5057
+
+GET {{homeCookAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
