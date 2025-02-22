@@ -28,11 +28,10 @@ namespace homeCookAPI.Controllers
         }
 
         // GET: api/RecipeRatings/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<RecipeRating>> GetRecipeRating(int id)
+        [HttpGet("{recipeRatingId}")]
+        public async Task<ActionResult<RecipeRating>> GetRecipeRating(int recipeRatingId)
         {
-            var recipeRating = await _context.RecipeRatings.FindAsync(id);
-
+            var recipeRating = await _context.RecipeRatings.FindAsync(recipeRatingId);
             if (recipeRating == null)
             {
                 return NotFound();
@@ -42,11 +41,10 @@ namespace homeCookAPI.Controllers
         }
 
         // PUT: api/RecipeRatings/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutRecipeRating(int id, RecipeRating recipeRating)
+        [HttpPut("{recipeRatingId}")]
+        public async Task<IActionResult> PutRecipeRating(int recipeRatingId, RecipeRating recipeRating)
         {
-            if (id != recipeRating.Id)
+            if (recipeRatingId != recipeRating.RecipeRatingId) // ✅ Updated from Id to RecipeRatingId
             {
                 return BadRequest();
             }
@@ -59,7 +57,7 @@ namespace homeCookAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!RecipeRatingExists(id))
+                if (!RecipeRatingExists(recipeRatingId))
                 {
                     return NotFound();
                 }
@@ -73,21 +71,20 @@ namespace homeCookAPI.Controllers
         }
 
         // POST: api/RecipeRatings
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<RecipeRating>> PostRecipeRating(RecipeRating recipeRating)
         {
             _context.RecipeRatings.Add(recipeRating);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetRecipeRating", new { id = recipeRating.Id }, recipeRating);
+            return CreatedAtAction("GetRecipeRating", new { recipeRatingId = recipeRating.RecipeRatingId }, recipeRating);
         }
 
         // DELETE: api/RecipeRatings/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRecipeRating(int id)
+        [HttpDelete("{recipeRatingId}")]
+        public async Task<IActionResult> DeleteRecipeRating(int recipeRatingId)
         {
-            var recipeRating = await _context.RecipeRatings.FindAsync(id);
+            var recipeRating = await _context.RecipeRatings.FindAsync(recipeRatingId);
             if (recipeRating == null)
             {
                 return NotFound();
@@ -99,9 +96,9 @@ namespace homeCookAPI.Controllers
             return NoContent();
         }
 
-        private bool RecipeRatingExists(int id)
+        private bool RecipeRatingExists(int recipeRatingId)
         {
-            return _context.RecipeRatings.Any(e => e.Id == id);
+            return _context.RecipeRatings.Any(e => e.RecipeRatingId == recipeRatingId);
         }
     }
 }

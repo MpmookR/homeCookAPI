@@ -30,6 +30,7 @@ namespace homeCookAPI.Controllers
                 {
                     r.RecipeId,
                     r.Name,
+                    r.Category,
                     r.Intro,
                     r.Ingredients,
                     r.HowTo,
@@ -58,6 +59,7 @@ namespace homeCookAPI.Controllers
                 {
                     r.RecipeId,
                     r.Name,
+                    r.Category,
                     r.Intro,
                     r.Ingredients,
                     r.HowTo,
@@ -93,6 +95,7 @@ namespace homeCookAPI.Controllers
 
             // Only update provided fields
             existingRecipe.Name = recipeUpdate.Name ?? existingRecipe.Name;
+            existingRecipe.Category = recipeUpdate.Category ?? existingRecipe.Category;
             existingRecipe.Intro = recipeUpdate.Intro ?? existingRecipe.Intro;
             existingRecipe.Ingredients = recipeUpdate.Ingredients ?? existingRecipe.Ingredients;
             existingRecipe.HowTo = recipeUpdate.HowTo ?? existingRecipe.HowTo;

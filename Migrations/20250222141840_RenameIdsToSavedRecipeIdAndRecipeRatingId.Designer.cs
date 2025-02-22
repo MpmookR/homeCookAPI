@@ -11,8 +11,8 @@ using homeCookAPI.Models;
 namespace homeCookAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250218125954_UpdateRecipeUserIdNullable")]
-    partial class UpdateRecipeUserIdNullable
+    [Migration("20250222141840_RenameIdsToSavedRecipeIdAndRecipeRatingId")]
+    partial class RenameIdsToSavedRecipeIdAndRecipeRatingId
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -224,7 +224,7 @@ namespace homeCookAPI.Migrations
 
             modelBuilder.Entity("homeCookAPI.Models.Comment", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("CommentId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -245,7 +245,7 @@ namespace homeCookAPI.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                    b.HasKey("CommentId");
 
                     b.HasIndex("ParentCommentId");
 
@@ -287,6 +287,10 @@ namespace homeCookAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("TEXT");
 
@@ -322,7 +326,7 @@ namespace homeCookAPI.Migrations
 
             modelBuilder.Entity("homeCookAPI.Models.RecipeRating", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("RecipeRatingId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -336,7 +340,7 @@ namespace homeCookAPI.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                    b.HasKey("RecipeRatingId");
 
                     b.HasIndex("RecipeId");
 
@@ -347,7 +351,7 @@ namespace homeCookAPI.Migrations
 
             modelBuilder.Entity("homeCookAPI.Models.SavedRecipe", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("SavedRecipeId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -361,7 +365,7 @@ namespace homeCookAPI.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                    b.HasKey("SavedRecipeId");
 
                     b.HasIndex("RecipeId");
 

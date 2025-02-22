@@ -20,7 +20,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = null; // Remove circular reference tracking
+        options.JsonSerializerOptions.PropertyNamingPolicy = null; // Keep property names as written
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
+
+
 var app = builder.Build();
 
 app.UseAuthentication();

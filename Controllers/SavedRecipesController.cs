@@ -28,11 +28,10 @@ namespace homeCookAPI.Controllers
         }
 
         // GET: api/SavedRecipes/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<SavedRecipe>> GetSavedRecipe(int id)
+        [HttpGet("{savedRecipeId}")]
+        public async Task<ActionResult<SavedRecipe>> GetSavedRecipe(int savedRecipeId)
         {
-            var savedRecipe = await _context.SavedRecipes.FindAsync(id);
-
+            var savedRecipe = await _context.SavedRecipes.FindAsync(savedRecipeId);
             if (savedRecipe == null)
             {
                 return NotFound();
@@ -42,11 +41,10 @@ namespace homeCookAPI.Controllers
         }
 
         // PUT: api/SavedRecipes/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutSavedRecipe(int id, SavedRecipe savedRecipe)
+        [HttpPut("{savedRecipeId}")]
+        public async Task<IActionResult> PutSavedRecipe(int savedRecipeId, SavedRecipe savedRecipe)
         {
-            if (id != savedRecipe.Id)
+            if (savedRecipeId != savedRecipe.SavedRecipeId) // ✅ Updated from Id to SavedRecipeId
             {
                 return BadRequest();
             }
@@ -59,7 +57,7 @@ namespace homeCookAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!SavedRecipeExists(id))
+                if (!SavedRecipeExists(savedRecipeId))
                 {
                     return NotFound();
                 }
@@ -73,21 +71,20 @@ namespace homeCookAPI.Controllers
         }
 
         // POST: api/SavedRecipes
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<SavedRecipe>> PostSavedRecipe(SavedRecipe savedRecipe)
         {
             _context.SavedRecipes.Add(savedRecipe);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSavedRecipe", new { id = savedRecipe.Id }, savedRecipe);
+            return CreatedAtAction("GetSavedRecipe", new { savedRecipeId = savedRecipe.SavedRecipeId }, savedRecipe);
         }
 
         // DELETE: api/SavedRecipes/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteSavedRecipe(int id)
+        [HttpDelete("{savedRecipeId}")]
+        public async Task<IActionResult> DeleteSavedRecipe(int savedRecipeId)
         {
-            var savedRecipe = await _context.SavedRecipes.FindAsync(id);
+            var savedRecipe = await _context.SavedRecipes.FindAsync(savedRecipeId);
             if (savedRecipe == null)
             {
                 return NotFound();
@@ -99,9 +96,9 @@ namespace homeCookAPI.Controllers
             return NoContent();
         }
 
-        private bool SavedRecipeExists(int id)
+        private bool SavedRecipeExists(int savedRecipeId)
         {
-            return _context.SavedRecipes.Any(e => e.Id == id);
+            return _context.SavedRecipes.Any(e => e.SavedRecipeId == savedRecipeId);
         }
     }
 }

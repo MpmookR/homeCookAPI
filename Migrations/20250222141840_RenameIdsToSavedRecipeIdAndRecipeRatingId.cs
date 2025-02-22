@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace homeCookAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateRecipeUserIdNullable : Migration
+    public partial class RenameIdsToSavedRecipeIdAndRecipeRatingId : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -166,6 +166,7 @@ namespace homeCookAPI.Migrations
                     RecipeId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Category = table.Column<string>(type: "TEXT", nullable: false),
                     Intro = table.Column<string>(type: "TEXT", nullable: false),
                     Ingredients = table.Column<string>(type: "TEXT", nullable: false),
                     HowTo = table.Column<string>(type: "TEXT", nullable: false),
@@ -187,7 +188,7 @@ namespace homeCookAPI.Migrations
                 name: "Comments",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    CommentId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Content = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -197,7 +198,7 @@ namespace homeCookAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Comments", x => x.Id);
+                    table.PrimaryKey("PK_Comments", x => x.CommentId);
                     table.ForeignKey(
                         name: "FK_Comments_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -208,7 +209,7 @@ namespace homeCookAPI.Migrations
                         name: "FK_Comments_Comments_ParentCommentId",
                         column: x => x.ParentCommentId,
                         principalTable: "Comments",
-                        principalColumn: "Id");
+                        principalColumn: "CommentId");
                     table.ForeignKey(
                         name: "FK_Comments_Recipes_RecipeId",
                         column: x => x.RecipeId,
@@ -248,7 +249,7 @@ namespace homeCookAPI.Migrations
                 name: "RecipeRatings",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    RecipeRatingId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Rating = table.Column<int>(type: "INTEGER", nullable: false),
                     UserId = table.Column<string>(type: "TEXT", nullable: false),
@@ -256,7 +257,7 @@ namespace homeCookAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_RecipeRatings", x => x.Id);
+                    table.PrimaryKey("PK_RecipeRatings", x => x.RecipeRatingId);
                     table.ForeignKey(
                         name: "FK_RecipeRatings_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -275,7 +276,7 @@ namespace homeCookAPI.Migrations
                 name: "SavedRecipes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    SavedRecipeId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     SavedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UserId = table.Column<string>(type: "TEXT", nullable: false),
@@ -283,7 +284,7 @@ namespace homeCookAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SavedRecipes", x => x.Id);
+                    table.PrimaryKey("PK_SavedRecipes", x => x.SavedRecipeId);
                     table.ForeignKey(
                         name: "FK_SavedRecipes_AspNetUsers_UserId",
                         column: x => x.UserId,
