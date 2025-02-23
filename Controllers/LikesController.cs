@@ -20,88 +20,118 @@ namespace homeCookAPI.Controllers
             _context = context;
         }
 
-        // GET: api/Likes
+        // api/likes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Like>>> GetLikes()
+        public async Task<ActionResult<IEnumerable<object>>> GetLikes()
         {
-            return await _context.Likes.ToListAsync();
+            var likes = await _context.Likes
+                .Include(l => l.User)
+                .Include(l => l.Recipe)
+                .Select(l => new
+                {
+                    l.LikeId,
+                    l.CreatedAt,
+                    User = l.User != null ? new { l.User.Id, l.User.FullName } : null,
+                    Recipe = l.Recipe != null ? new { l.RecipeId, l.Recipe.Name } : null
+                })
+                .ToListAsync();
+
+            return Ok(likes);
         }
 
-        // GET: api/Likes/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Like>> GetLike(int id)
+        // api/likes/1
+        [HttpGet("{likeId}")]
+        public async Task<ActionResult<object>> GetLike(int likeId)
         {
-            var like = await _context.Likes.FindAsync(id);
+            var like = await _context.Likes
+                .Include(l => l.User)
+                .Include(l => l.Recipe)
+                .Where(l => l.LikeId == likeId)
+                .Select(l => new
+                {
+                    l.LikeId,
+                    l.CreatedAt,
+                    User = l.User != null ? new { l.User.Id, l.User.FullName } : null,
+                    Recipe = l.Recipe != null ? new { l.RecipeId, l.Recipe.Name } : null
+                })
+                .FirstOrDefaultAsync();
 
             if (like == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Like not found" });
             }
 
-            return like;
+            return Ok(like);
         }
 
-        // PUT: api/Likes/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutLike(int id, Like like)
-        {
-            if (id != like.LikeId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(like).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!LikeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Likes
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: Like a recipe
+        // api/likes
         [HttpPost]
-        public async Task<ActionResult<Like>> PostLike(Like like)
+        public async Task<ActionResult<object>> PostLike(Like like)
         {
+            // Ensure Recipe exists
+            // var recipe = await _context.Recipes.FindAsync(like.RecipeId);
+            // if (recipe == null)
+            // {
+            //     return BadRequest(new { message = "Recipe not found" });
+            // }
+
+            var recipe = await _context.Recipes
+        .Where(r => r.RecipeId == like.RecipeId)
+        .FirstOrDefaultAsync();
+
+            if (recipe == null)
+            {
+                return BadRequest(new { message = $"Recipe with ID {like.RecipeId} not found" });
+            }
+
+            // Ensure User exists
+            var user = await _context.Users.FindAsync(like.UserId);
+            if (user == null)
+            {
+                return BadRequest(new { message = "User not found" });
+            }
+
+            // Prevent duplicate likes by the same user for the same recipe
+            var existingLike = await _context.Likes
+                .FirstOrDefaultAsync(l => l.RecipeId == like.RecipeId && l.UserId == like.UserId);
+            if (existingLike != null)
+            {
+                return BadRequest(new { message = "User has already liked this recipe" });
+            }
+
+            like.CreatedAt = DateTime.UtcNow;
             _context.Likes.Add(like);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetLike", new { id = like.LikeId }, like);
+            return Ok(new
+            {
+                message = "Recipe successfully liked!",
+                like = new
+                {
+                    like.LikeId,
+                    like.CreatedAt,
+                    like.UserId,
+                    like.RecipeId
+                }
+            });
         }
 
-        // DELETE: api/Likes/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteLike(int id)
+        // DELETE: Unlike a recipe
+        //api/likes/1
+        [HttpDelete("{likeId}")]
+        public async Task<IActionResult> DeleteLike(int likeId)
         {
-            var like = await _context.Likes.FindAsync(id);
+            var like = await _context.Likes.FindAsync(likeId);
             if (like == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Like not found" });
             }
 
             _context.Likes.Remove(like);
             await _context.SaveChangesAsync();
 
-            return NoContent();
-        }
-
-        private bool LikeExists(int id)
-        {
-            return _context.Likes.Any(e => e.LikeId == id);
+            return Ok(new { message = "Like has been successfully removed!" });
         }
     }
 }
