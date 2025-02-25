@@ -8,6 +8,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//Ilogger
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();  //Enable Console Logging
+builder.Logging.AddDebug();    //Enable Debug Logging
+
 // Retrieve connection string from appsettings.json
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Connection"))); 

@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using homeCookAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.Extensions.Logging;
 
 namespace homeCookAPI.Controllers
 {
@@ -16,16 +17,21 @@ namespace homeCookAPI.Controllers
     public class RecipesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<RecipesController> _logger;
 
-        public RecipesController(ApplicationDbContext context)
+        public RecipesController(ApplicationDbContext context, ILogger<RecipesController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/Recipes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RecipeDTO>>> GetRecipes()
         {
+
+            _logger.LogInformation("Fetching all recipes...");
+
             var recipes = await _context.Recipes
                 .Include(r => r.User)
                 .Include(r => r.Comments)
@@ -92,6 +98,7 @@ namespace homeCookAPI.Controllers
                 })
                 .ToListAsync();
 
+            _logger.LogInformation("Successfully retrieved {Count} recipes.", recipes.Count);
             return Ok(recipes);
         }
 
@@ -99,6 +106,8 @@ namespace homeCookAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<RecipeDTO>> GetRecipe(int id)
         {
+            _logger.LogInformation("Fetching recipe with ID: {RecipeId}", id);
+
             var recipe = await _context.Recipes
                 .Include(r => r.User)
                 .Include(r => r.Comments)
@@ -168,22 +177,37 @@ namespace homeCookAPI.Controllers
 
             if (recipe == null)
             {
+                _logger.LogWarning("Recipe with ID {RecipeId} not found.", id);
                 return NotFound(new { message = "Recipe not found" });
             }
 
+            _logger.LogInformation("Successfully retrieved recipe with ID: {RecipeId}", id);
             return Ok(recipe);
         }
 
-
         // PUT: api/Recipes/5
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutRecipe(int id, [FromBody] Recipe recipeUpdate)
         {
+            _logger.LogInformation("Updating recipe with ID: {RecipeId}", id);
+
             var existingRecipe = await _context.Recipes.FindAsync(id);
 
             if (existingRecipe == null)
             {
+                _logger.LogWarning("Failed to update - Recipe with ID {RecipeId} not found.", id);
                 return NotFound(new { message = "Recipe not found" });
+            }
+
+            // Get logged-in user ID from JWT token
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Check if the logged-in user is the owner of the recipe
+            if (existingRecipe.UserId != userId)
+            {
+                _logger.LogWarning("Unauthorized edit attempt - User {UserId} tried to edit recipe ID {RecipeId}", userId, id);
+                return Forbid("You are not authorized to edit this recipe.");
             }
 
             // Only update provided fields
@@ -200,30 +224,29 @@ namespace homeCookAPI.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Recipe updated successfully with ID: {RecipeId} by User ID: {UserId}", id, userId);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!RecipeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                _logger.LogError("Database concurrency error while updating recipe ID: {RecipeId}", id);
+                return BadRequest("Concurrency error occurred.");
             }
 
             return Ok(new { message = "Recipe updated successfully!", recipe = existingRecipe });
         }
 
-
         // POST: api/Recipes
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<Recipe>> PostRecipe(Recipe recipe)
         {
-            if (string.IsNullOrEmpty(recipe.UserId)) // Ensure UserId is provided
-                return BadRequest(new { message = "UserId is required." });
+            _logger.LogInformation("Creating a new recipe for User ID: {UserId}", recipe.UserId);
 
+            if (string.IsNullOrEmpty(recipe.UserId)) // Ensure UserId is provided
+            {
+                _logger.LogWarning("Failed to create recipe - UserId is missing.");
+                return BadRequest(new { message = "UserId is required." });
+            }
             // Set the creation date automatically
             recipe.CreateDate = DateTime.UtcNow;
 
@@ -233,6 +256,7 @@ namespace homeCookAPI.Controllers
             _context.Recipes.Add(recipe);
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Recipe created successfully with ID: {RecipeId}", recipe.RecipeId);
             return CreatedAtAction("GetRecipe", new { id = recipe.RecipeId }, recipe);
         }
 
@@ -241,31 +265,47 @@ namespace homeCookAPI.Controllers
         [HttpDelete("{recipeId}")]
         public async Task<IActionResult> DeleteRecipe(int recipeId)
         {
+            _logger.LogInformation("Attempting to delete recipe with ID: {RecipeId}", recipeId);
+
             var recipe = await _context.Recipes.FindAsync(recipeId);
             if (recipe == null)
+            {
+                _logger.LogWarning("Failed to delete - Recipe with ID {RecipeId} not found.", recipeId);
                 return NotFound(new { message = "Recipe not found." });
-
+            }
             // Get logged-in user ID
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // If the user is an Admin or SuperAdmin, they can delete any post
-            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+            try
             {
-                _context.Recipes.Remove(recipe);
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Recipe deleted successfully by Admin/SuperAdmin." });
-            }
+                // If the user is an Admin or SuperAdmin, they can delete any post
+                if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                {
+                    _context.Recipes.Remove(recipe);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Recipe with ID {RecipeId} deleted by {Role}", recipeId,
+                        User.IsInRole("Admin") ? "Admin" : "SuperAdmin");
+                    return Ok(new { message = "Recipe deleted successfully by Admin/SuperAdmin." });
+                }
 
-            // If the user is the owner of the recipe, they can delete it
-            if (recipe.UserId == userId)
+                // If the user is the owner of the recipe, they can delete it
+                if (recipe.UserId == userId)
+                {
+                    _context.Recipes.Remove(recipe);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("User {UserId} successfully deleted their recipe with ID {RecipeId}", userId, recipeId);
+                    return Ok(new { message = "Your recipe has been deleted successfully." });
+                }
+
+                // Otherwise, deny access
+                _logger.LogWarning("Unauthorized deletion attempt by User {UserId} on Recipe ID {RecipeId}", userId, recipeId);
+                return Forbid("You are not authorized to delete this recipe.");
+            }
+            catch (Exception ex)
             {
-                _context.Recipes.Remove(recipe);
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Your recipe has been deleted successfully." });
+                _logger.LogError(ex, "An error occurred while attempting to delete recipe with ID {RecipeId}", recipeId);
+                return StatusCode(500, new { message = "An internal error occurred while deleting the recipe." });
             }
-
-            // Otherwise, deny access
-            return Forbid("You are not authorized to delete this recipe.");
         }
 
         private bool RecipeExists(int id)

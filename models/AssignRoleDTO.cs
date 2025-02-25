@@ -7,8 +7,7 @@ namespace homeCookAPI.Models
         [Required(ErrorMessage = "UserId is required.")]
         public string UserId { get; set; }
 
-        [Required(ErrorMessage = "RoleName is required.")]
-        [RegularExpression("^(SuperAdmin|Admin|User)$", ErrorMessage = "Invalid role name.")]
+        [Required(ErrorMessage = "Role name is required.")]
         public string RoleName { get; set; }
     }
 }

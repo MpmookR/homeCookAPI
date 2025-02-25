@@ -12,6 +12,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace homeCookAPI.Controllers
 {
@@ -23,13 +24,15 @@ namespace homeCookAPI.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly EmailService _emailService;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, EmailService emailService, IConfiguration configuration)
+        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, EmailService emailService, IConfiguration configuration, ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailService = emailService;
             _configuration = configuration;
+             _logger = logger; 
         }
 
         // Register a new user with email verification
@@ -37,6 +40,8 @@ namespace homeCookAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
+            _logger.LogInformation("User registration attempt: {Email}", model.Email);
+
             var user = new ApplicationUser
             {
                 UserName = model.Email,
@@ -46,7 +51,10 @@ namespace homeCookAPI.Controllers
 
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
+            {
+                _logger.LogError("User registration failed: {Email}", model.Email);
                 return BadRequest(result.Errors);
+            }
 
             // Generate Token
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -57,6 +65,8 @@ namespace homeCookAPI.Controllers
             await _emailService.SendEmailAsync(user.Email, "Verify Your Email",
                 $"Welcome! Please verify your email by clicking {verificationLink}");
 
+            _logger.LogInformation("User registered successfully: {Email}", model.Email);
+
             return Ok(new { message = "User registered successfully! Please check your email for verification." });
         }
 
@@ -64,15 +74,25 @@ namespace homeCookAPI.Controllers
         [HttpGet("verify-email")]
         public async Task<IActionResult> VerifyEmail(string userId, string token)
         {
+            _logger.LogInformation("Email verification attempt for User ID: {UserId}", userId);
+
             var decodedToken = Encoding.UTF8.GetString(Convert.FromBase64String(token));
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
+            {
+                _logger.LogWarning("Email verification failed - User not found: {UserId}", userId);
                 return NotFound(new { message = "User not found." });
+            }
 
             var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
             if (!result.Succeeded)
-                return BadRequest(new { message = "Email verification failed.", errors = result.Errors });
+            {
+                _logger.LogError("Email verification failed - Invalid Token for User ID: {UserId}", userId);
 
+                return BadRequest(new { message = "Email verification failed.", errors = result.Errors });
+            }
+            
+            _logger.LogInformation("Email verified successfully for User ID: {UserId}", userId);
             return Ok(new { message = "Email verified successfully! You can now log in." });
         }
 
@@ -81,16 +101,28 @@ namespace homeCookAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
+            _logger.LogInformation("Login attempt for email: {Email}", model.Email); //Log login attempt
+
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
+            if (user == null)  
+            {     
+                _logger.LogWarning("Login failed for email: {Email} - User not found", model.Email);
                 return Unauthorized(new { message = "Invalid credentials" });
+            }
 
             if (!await _userManager.IsEmailConfirmedAsync(user))
+            {
+            
+                _logger.LogWarning("Login attempt with unverified email: {Email}", model.Email);
                 return Unauthorized(new { message = "Email not verified. Please check your email for the verification link." });
+            }
 
             var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
             if (!result.Succeeded)
+            {
+                _logger.LogWarning("Invalid login attempt for email: {Email}", model.Email);
                 return Unauthorized(new { message = "Invalid login attempt" });
+            }
 
             var userRoles = await _userManager.GetRolesAsync(user);
             var userRole = userRoles.FirstOrDefault() ?? "User";
@@ -117,6 +149,7 @@ namespace homeCookAPI.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
+            _logger.LogInformation("User {Email} logged in successfully", model.Email);
             return Ok(new
             {
                 message = "Login successful!",
