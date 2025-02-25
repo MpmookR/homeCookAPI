@@ -22,22 +22,25 @@ namespace homeCookAPI.Controllers
 
         // api/savedrecipes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetSavedRecipes()
+        public async Task<ActionResult<IEnumerable<SavedRecipeDTO>>> GetSavedRecipes()
         {
             var savedRecipes = await _context.SavedRecipes
                 .Include(s => s.User)
                 .Include(s => s.Recipe)
-                .Select(s => new
+                .Select(s => new SavedRecipeDTO
                 {
-                    s.SavedRecipeId,
-                    s.CreatedAt,
-                    User = s.User != null ? new { s.User.Id, s.User.FullName } : null,
-                    Recipe = s.Recipe != null ? new { s.RecipeId, s.Recipe.Name } : null
+                    SavedRecipeId = s.SavedRecipeId,
+                    UserId = s.UserId,
+                    UserName = s.User.FullName,
+                    RecipeId = s.RecipeId,
+                    RecipeName = s.Recipe.Name,
+                    CreatedAt = s.CreatedAt
                 })
                 .ToListAsync();
 
             return Ok(savedRecipes);
         }
+
 
         // GET saved recipe by ID
         [HttpGet("{savedRecipeId}")]

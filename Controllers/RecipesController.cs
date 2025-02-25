@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using homeCookAPI.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace homeCookAPI.Controllers
 {
@@ -22,26 +24,71 @@ namespace homeCookAPI.Controllers
 
         // GET: api/Recipes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetRecipes()
+        public async Task<ActionResult<IEnumerable<RecipeDTO>>> GetRecipes()
         {
             var recipes = await _context.Recipes
-                .Include(r => r.User) // Ensure User is loaded
-                .Select(r => new
+                .Include(r => r.User)
+                .Include(r => r.Comments)
+                .Include(r => r.Ratings)
+                .Include(r => r.Likes)
+                .Include(r => r.SavedRecipes)
+                .Select(r => new RecipeDTO
                 {
-                    r.RecipeId,
-                    r.Name,
-                    r.Category,
-                    r.Intro,
-                    r.Ingredients,
-                    r.HowTo,
-                    r.Image,
-                    r.CreateDate,
-                    User = r.User != null ? new { r.User.Id, r.User.FullName } : null, // Return User details
-                    r.UserId,
-                    r.Comments,
-                    r.Ratings,
-                    r.Likes,
-                    r.SavedRecipes
+                    RecipeId = r.RecipeId,
+                    Name = r.Name,
+                    Category = r.Category,
+                    Intro = r.Intro,
+                    Ingredients = r.Ingredients,
+                    HowTo = r.HowTo,
+                    Image = r.Image,
+                    CreateDate = r.CreateDate,
+
+                    // User Details
+                    UserId = r.UserId,
+                    UserName = r.User.FullName,
+
+                    // Convert Comments to DTOs
+                    Comments = r.Comments.Select(c => new CommentDTO
+                    {
+                        CommentId = c.CommentId,
+                        Content = c.Content,
+                        CreatedAt = c.CreatedAt,
+                        UserId = c.UserId,
+                        UserName = c.User.FullName,
+                        RecipeId = c.RecipeId
+                    }).ToList(),
+
+                    // Convert Ratings to DTOs
+                    Ratings = r.Ratings.Select(rt => new RecipeRatingDTO
+                    {
+                        RecipeRatingId = rt.RecipeRatingId,
+                        UserId = rt.UserId,
+                        UserName = rt.User.FullName,
+                        RecipeId = rt.RecipeId,
+                        Rating = rt.Rating
+                    }).ToList(),
+
+                    // Convert Likes to DTOs
+                    Likes = r.Likes.Select(l => new LikeDTO
+                    {
+                        LikeId = l.LikeId,
+                        UserId = l.UserId,
+                        UserName = l.User.FullName,
+                        RecipeId = l.RecipeId,
+                        RecipeName = l.Recipe.Name,
+                        CreatedAt = l.CreatedAt
+                    }).ToList(),
+
+                    // Convert Saved Recipes to DTOs
+                    SavedRecipes = r.SavedRecipes.Select(sr => new SavedRecipeDTO
+                    {
+                        SavedRecipeId = sr.SavedRecipeId,
+                        UserId = sr.UserId,
+                        UserName = sr.User.FullName,
+                        RecipeId = sr.RecipeId,
+                        RecipeName = sr.Recipe.Name,
+                        CreatedAt = sr.CreatedAt
+                    }).ToList()
                 })
                 .ToListAsync();
 
@@ -50,27 +97,72 @@ namespace homeCookAPI.Controllers
 
         // Get a single recipe by ID and include user details
         [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetRecipe(int id)
+        public async Task<ActionResult<RecipeDTO>> GetRecipe(int id)
         {
             var recipe = await _context.Recipes
-                .Include(r => r.User) // Load User details
+                .Include(r => r.User)
+                .Include(r => r.Comments)
+                .Include(r => r.Ratings)
+                .Include(r => r.Likes)
+                .Include(r => r.SavedRecipes)
                 .Where(r => r.RecipeId == id)
-                .Select(r => new
+                .Select(r => new RecipeDTO
                 {
-                    r.RecipeId,
-                    r.Name,
-                    r.Category,
-                    r.Intro,
-                    r.Ingredients,
-                    r.HowTo,
-                    r.Image,
-                    r.CreateDate,
-                    User = r.User != null ? new { r.User.Id, r.User.FullName } : null,
-                    r.UserId,
-                    r.Comments,
-                    r.Ratings,
-                    r.Likes,
-                    r.SavedRecipes
+                    RecipeId = r.RecipeId,
+                    Name = r.Name,
+                    Category = r.Category,
+                    Intro = r.Intro,
+                    Ingredients = r.Ingredients,
+                    HowTo = r.HowTo,
+                    Image = r.Image,
+                    CreateDate = r.CreateDate,
+
+                    // User Details
+                    UserId = r.UserId,
+                    UserName = r.User.FullName,
+
+                    // Convert Comments to DTOs
+                    Comments = r.Comments.Select(c => new CommentDTO
+                    {
+                        CommentId = c.CommentId,
+                        Content = c.Content,
+                        CreatedAt = c.CreatedAt,
+                        UserId = c.UserId,
+                        UserName = c.User.FullName,
+                        RecipeId = c.RecipeId
+                    }).ToList(),
+
+                    // Convert Ratings to DTOs
+                    Ratings = r.Ratings.Select(rt => new RecipeRatingDTO
+                    {
+                        RecipeRatingId = rt.RecipeRatingId,
+                        UserId = rt.UserId,
+                        UserName = rt.User.FullName,
+                        RecipeId = rt.RecipeId,
+                        Rating = rt.Rating
+                    }).ToList(),
+
+                    // Convert Likes to DTOs
+                    Likes = r.Likes.Select(l => new LikeDTO
+                    {
+                        LikeId = l.LikeId,
+                        UserId = l.UserId,
+                        UserName = l.User.FullName,
+                        RecipeId = l.RecipeId,
+                        RecipeName = l.Recipe.Name,
+                        CreatedAt = l.CreatedAt
+                    }).ToList(),
+
+                    // Convert Saved Recipes to DTOs
+                    SavedRecipes = r.SavedRecipes.Select(sr => new SavedRecipeDTO
+                    {
+                        SavedRecipeId = sr.SavedRecipeId,
+                        UserId = sr.UserId,
+                        UserName = sr.User.FullName,
+                        RecipeId = sr.RecipeId,
+                        RecipeName = sr.Recipe.Name,
+                        CreatedAt = sr.CreatedAt
+                    }).ToList()
                 })
                 .FirstOrDefaultAsync();
 
@@ -81,6 +173,7 @@ namespace homeCookAPI.Controllers
 
             return Ok(recipe);
         }
+
 
         // PUT: api/Recipes/5
         [HttpPut("{id}")]
@@ -144,19 +237,35 @@ namespace homeCookAPI.Controllers
         }
 
         // DELETE: api/Recipes/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRecipe(int id)
+        [Authorize] // Any logged-in user can attempt this action
+        [HttpDelete("{recipeId}")]
+        public async Task<IActionResult> DeleteRecipe(int recipeId)
         {
-            var recipe = await _context.Recipes.FindAsync(id);
+            var recipe = await _context.Recipes.FindAsync(recipeId);
             if (recipe == null)
+                return NotFound(new { message = "Recipe not found." });
+
+            // Get logged-in user ID
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // If the user is an Admin or SuperAdmin, they can delete any post
+            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
             {
-                return NotFound(new { message = "Recipe not found" });
+                _context.Recipes.Remove(recipe);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Recipe deleted successfully by Admin/SuperAdmin." });
             }
 
-            _context.Recipes.Remove(recipe);
-            await _context.SaveChangesAsync();
+            // If the user is the owner of the recipe, they can delete it
+            if (recipe.UserId == userId)
+            {
+                _context.Recipes.Remove(recipe);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Your recipe has been deleted successfully." });
+            }
 
-            return Ok(new { message = "Recipe has been deleted successfully!" });
+            // Otherwise, deny access
+            return Forbid("You are not authorized to delete this recipe.");
         }
 
         private bool RecipeExists(int id)

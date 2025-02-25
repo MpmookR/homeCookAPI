@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("homeCookAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+83255d65513dad09e90a010da41d5025190c09f6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+660653fb16b4b2d26c7fa198ae879b8a6a8cb5b6")]
 [assembly: System.Reflection.AssemblyProductAttribute("homeCookAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("homeCookAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

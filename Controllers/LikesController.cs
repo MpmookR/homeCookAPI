@@ -20,66 +20,62 @@ namespace homeCookAPI.Controllers
             _context = context;
         }
 
-        // api/likes
+        // GET: api/likes
+        // show all recipe that recieved like
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetLikes()
+        public async Task<ActionResult<IEnumerable<LikeDTO>>> GetLikes()
         {
             var likes = await _context.Likes
                 .Include(l => l.User)
                 .Include(l => l.Recipe)
-                .Select(l => new
+                .Select(l => new LikeDTO
                 {
-                    l.LikeId,
-                    l.CreatedAt,
-                    User = l.User != null ? new { l.User.Id, l.User.FullName } : null,
-                    Recipe = l.Recipe != null ? new { l.RecipeId, l.Recipe.Name } : null
+                    LikeId = l.LikeId,
+                    UserId = l.UserId,
+                    UserName = l.User.FullName,
+                    RecipeId = l.RecipeId,
+                    RecipeName = l.Recipe.Name,
+                    CreatedAt = l.CreatedAt
                 })
                 .ToListAsync();
 
             return Ok(likes);
         }
 
-        // api/likes/1
-        [HttpGet("{likeId}")]
-        public async Task<ActionResult<object>> GetLike(int likeId)
+        // Get Likes for a Specific Recipe
+        // GET: api/likes/recipe/1
+        [HttpGet("recipe/{recipeId}")]
+        public async Task<ActionResult<IEnumerable<LikeDTO>>> GetLikesByRecipe(int recipeId)
         {
-            var like = await _context.Likes
-                .Include(l => l.User)
-                .Include(l => l.Recipe)
-                .Where(l => l.LikeId == likeId)
-                .Select(l => new
-                {
-                    l.LikeId,
-                    l.CreatedAt,
-                    User = l.User != null ? new { l.User.Id, l.User.FullName } : null,
-                    Recipe = l.Recipe != null ? new { l.RecipeId, l.Recipe.Name } : null
-                })
-                .FirstOrDefaultAsync();
-
-            if (like == null)
+            var recipe = await _context.Recipes.FindAsync(recipeId);
+            if (recipe == null)
             {
-                return NotFound(new { message = "Like not found" });
+                return NotFound(new { message = "Recipe not found" });
             }
 
-            return Ok(like);
+            var likes = await _context.Likes
+                .Where(l => l.RecipeId == recipeId)
+                .Include(l => l.User)
+                .Select(l => new LikeDTO
+                {
+                    LikeId = l.LikeId,
+                    UserId = l.UserId,
+                    UserName = l.User.FullName,
+                    RecipeId = l.RecipeId,
+                    RecipeName = recipe.Name,
+                    CreatedAt = l.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(likes);
         }
 
-        // POST: Like a recipe
-        // api/likes
+        // POST: api/likes
         [HttpPost]
         public async Task<ActionResult<object>> PostLike(Like like)
         {
             // Ensure Recipe exists
-            // var recipe = await _context.Recipes.FindAsync(like.RecipeId);
-            // if (recipe == null)
-            // {
-            //     return BadRequest(new { message = "Recipe not found" });
-            // }
-
-            var recipe = await _context.Recipes
-        .Where(r => r.RecipeId == like.RecipeId)
-        .FirstOrDefaultAsync();
-
+            var recipe = await _context.Recipes.FindAsync(like.RecipeId);
             if (recipe == null)
             {
                 return BadRequest(new { message = $"Recipe with ID {like.RecipeId} not found" });
@@ -92,7 +88,7 @@ namespace homeCookAPI.Controllers
                 return BadRequest(new { message = "User not found" });
             }
 
-            // Prevent duplicate likes by the same user for the same recipe
+            // Prevent duplicate likes
             var existingLike = await _context.Likes
                 .FirstOrDefaultAsync(l => l.RecipeId == like.RecipeId && l.UserId == like.UserId);
             if (existingLike != null)
@@ -100,6 +96,7 @@ namespace homeCookAPI.Controllers
                 return BadRequest(new { message = "User has already liked this recipe" });
             }
 
+            // Save Like
             like.CreatedAt = DateTime.UtcNow;
             _context.Likes.Add(like);
             await _context.SaveChangesAsync();
@@ -107,18 +104,20 @@ namespace homeCookAPI.Controllers
             return Ok(new
             {
                 message = "Recipe successfully liked!",
-                like = new
+                like = new LikeDTO
                 {
-                    like.LikeId,
-                    like.CreatedAt,
-                    like.UserId,
-                    like.RecipeId
+                    LikeId = like.LikeId,
+                    UserId = like.UserId,
+                    UserName = user.FullName,
+                    RecipeId = like.RecipeId,
+                    RecipeName = recipe.Name,
+                    CreatedAt = like.CreatedAt
                 }
             });
         }
 
-        // DELETE: Unlike a recipe
-        //api/likes/1
+        // Unlike a Recipe
+        // DELETE: api/likes/1
         [HttpDelete("{likeId}")]
         public async Task<IActionResult> DeleteLike(int likeId)
         {

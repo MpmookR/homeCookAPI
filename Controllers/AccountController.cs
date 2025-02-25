@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using homeCookAPI.Models;
-using homeCookAPI.Services; // Added to use EmailService
+using homeCookAPI.Services; 
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +9,8 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 namespace homeCookAPI.Controllers
@@ -19,7 +21,7 @@ namespace homeCookAPI.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly EmailService _emailService; //Injected Email Service
+        private readonly EmailService _emailService;
         private readonly IConfiguration _configuration;
 
         public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, EmailService emailService, IConfiguration configuration)
@@ -48,14 +50,7 @@ namespace homeCookAPI.Controllers
 
             // Generate Token
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-            // Print Debug Info to Terminal
-            Console.WriteLine($"Generated Token (Before Encoding): {token}");
-
-            // encode Token Before Sending
             var encodedToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(token));
-            Console.WriteLine($"Encoded Token (Sent in Email): {encodedToken}");
-
             var verificationLink = $"http://localhost:5057/api/account/verify-email?userId={user.Id}&token={encodedToken}";
 
             // Send Email
@@ -65,38 +60,24 @@ namespace homeCookAPI.Controllers
             return Ok(new { message = "User registered successfully! Please check your email for verification." });
         }
 
-
         // Verify Email
         [HttpGet("verify-email")]
         public async Task<IActionResult> VerifyEmail(string userId, string token)
         {
-            Console.WriteLine($"User ID from Request: {userId}");
-            Console.WriteLine($"Received Token (From URL): {token}");
-
             var decodedToken = Encoding.UTF8.GetString(Convert.FromBase64String(token));
-            Console.WriteLine($"Decoded Token (Before Verification): {decodedToken}");
-
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
-            {
-                Console.WriteLine("User not found!");
                 return NotFound(new { message = "User not found." });
-            }
 
             var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
             if (!result.Succeeded)
-            {
-                Console.WriteLine("Email Verification Failed - Invalid Token");
                 return BadRequest(new { message = "Email verification failed.", errors = result.Errors });
-            }
 
             return Ok(new { message = "Email verified successfully! You can now log in." });
         }
 
-
-
-        //Login User (Restricts login until email is verified
-
+        // Restricts login until email is verified
+        // api/account/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -104,7 +85,6 @@ namespace homeCookAPI.Controllers
             if (user == null)
                 return Unauthorized(new { message = "Invalid credentials" });
 
-            // ✅ Check if the email is verified before allowing login
             if (!await _userManager.IsEmailConfirmedAsync(user))
                 return Unauthorized(new { message = "Email not verified. Please check your email for the verification link." });
 
@@ -112,7 +92,10 @@ namespace homeCookAPI.Controllers
             if (!result.Succeeded)
                 return Unauthorized(new { message = "Invalid login attempt" });
 
-            // ✅ Generate JWT Token
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var userRole = userRoles.FirstOrDefault() ?? "User";
+
+            // Generate JWT Token
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
 
@@ -120,14 +103,14 @@ namespace homeCookAPI.Controllers
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-            new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(ClaimTypes.Email, user.Email)
-        }),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, userRole) // Includes user role in JWT
+                }),
                 Expires = DateTime.UtcNow.AddHours(Convert.ToInt32(_configuration["Jwt:ExpireHours"])),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Issuer"],
-
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
@@ -138,23 +121,23 @@ namespace homeCookAPI.Controllers
             {
                 message = "Login successful!",
                 token = tokenString,
-                user = new
+                user = new UserDTO
                 {
-                    user.Id,
-                    user.FullName,
-                    user.Email,
-                    user.JoinDate
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    JoinDate = user.JoinDate
                 }
             });
         }
 
-
-        // Get all users
+        // Get all users (Uses DTO)
+        // api/account/users  >> header: Authorization: Bearer {JWT_TOKEN}
         [HttpGet("users")]
-        public async Task<ActionResult<object>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
             var users = await _userManager.Users
-                .Select(u => new
+                .Select(u => new UserDTO
                 {
                     Id = u.Id,
                     FullName = u.FullName,
@@ -163,28 +146,41 @@ namespace homeCookAPI.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(new { message = "Users retrieved successfully", users = users });
+            return Ok(users);
         }
 
-
-        //Get user by ID
+        // Get user by ID (Uses DTO)
+        // api/account/users/{USER_ID}
         [HttpGet("users/{id}")]
-        public async Task<ActionResult<object>> GetUserById(string id)
+        public async Task<ActionResult<UserDTO>> GetUserById(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
                 return NotFound(new { message = "User not found" });
 
-            return Ok(new
+            return Ok(new UserDTO
             {
-                user.Id,
-                user.FullName,
-                user.Email,
-                user.JoinDate
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                JoinDate = user.JoinDate
             });
         }
 
-        // Log out user  
+        // Report User only admin and user
+        // api/account/report-user
+        [Authorize]
+        [HttpPost("report-user")]
+        public async Task<IActionResult> ReportUser([FromBody] ReportUserModel model)
+        {
+            var user = await _userManager.FindByIdAsync(model.UserId);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            return Ok(new { message = $"User {model.UserId} has been reported to the Super Admin." });
+        }
+
+        // api/account/logout
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
@@ -192,13 +188,15 @@ namespace homeCookAPI.Controllers
             return Ok(new { message = "User successfully signed out" });
         }
 
-        //Delete user by ID with improved error handling
+        // Delete user by ID (SuperAdmin only)
+        // api/account/users/{USER_ID} >> header: Authorization: Bearer {JWT_TOKEN}
+        [Authorize(Roles = "SuperAdmin")]
         [HttpDelete("users/{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
-                return NotFound(new { message = "User not found" });
+                return NotFound(new { message = "User not found." });
 
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)

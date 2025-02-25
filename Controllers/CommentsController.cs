@@ -20,68 +20,45 @@ namespace homeCookAPI.Controllers
             _context = context;
         }
 
-        // GET: api/Comments
+        // api/Comments 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetComments()
+        public async Task<ActionResult<IEnumerable<CommentDTO>>> GetComments()
         {
             var comments = await _context.Comments
                 .Include(c => c.User)
-                .Include(c => c.Recipe)
-                .Include(c => c.Replies)
-                .Select(c => new
+                .Select(c => new CommentDTO
                 {
-                    c.CommentId,
-                    c.Content,
-                    c.CreatedAt,
-                    User = c.User != null ? new { c.User.Id, c.User.FullName } : null,
-                    Recipe = c.Recipe != null ? new { c.RecipeId, c.Recipe.Name } : null,
-                    c.ParentCommentId,
-                    Replies = c.Replies.Select(r => new
-                    {
-                        r.CommentId,
-                        r.Content,
-                        r.CreatedAt,
-                        User = r.User != null ? new { r.User.Id, r.User.FullName } : null
-                    }).ToList()
+                    CommentId = c.CommentId,
+                    Content = c.Content,
+                    CreatedAt = c.CreatedAt,
+                    UserId = c.UserId,
+                    UserName = c.User.FullName,
+                    RecipeId = c.RecipeId
                 })
                 .ToListAsync();
 
             return Ok(comments);
         }
 
-
-        // GET: api/Comments/5
-        [HttpGet("{commentId}")]
-        public async Task<ActionResult<Comment>> GetComment(int commentId)
-        {
-            var comment = await _context.Comments.FindAsync(commentId);
-
-            if (comment == null)
-            {
-                return NotFound();
-            }
-
-            return comment;
-        }
-
-        // GET: api/comments/1/replies
+        // api/comments/{commentId}/replies 
         [HttpGet("{commentId}/replies")]
-        public async Task<ActionResult<IEnumerable<object>>> GetCommentReplies(int commentId)
+        public async Task<ActionResult<IEnumerable<CommentDTO>>> GetCommentReplies(int commentId)
         {
             var replies = await _context.Comments
                 .Where(c => c.ParentCommentId == commentId)
                 .Include(c => c.User)
-                .Select(c => new
+                .Select(c => new CommentDTO
                 {
-                    c.CommentId,
-                    c.Content,
-                    c.CreatedAt,
-                    User = c.User != null ? new { c.User.Id, c.User.FullName } : null,
-                    c.ParentCommentId
+                    CommentId = c.CommentId,
+                    Content = c.Content,
+                    CreatedAt = c.CreatedAt,
+                    UserId = c.UserId,
+                    UserName = c.User.FullName,
+                    RecipeId = c.RecipeId
                 })
                 .ToListAsync();
 
-            if (replies == null || replies.Count == 0)
+            if (!replies.Any())
             {
                 return NotFound(new { message = "No replies found for this comment" });
             }
@@ -89,20 +66,19 @@ namespace homeCookAPI.Controllers
             return Ok(replies);
         }
 
-
-        // PUT: api/Comments/5
+        // api/Comments/{commentId} 
         [HttpPut("{commentId}")]
-        public async Task<IActionResult> PutComment(int commentId, Comment commentUpdate)
+        public async Task<IActionResult> PutComment(int commentId, CommentDTO commentUpdate)
         {
-            var existingComment = await _context.Comments.FindAsync(commentId);
+            var existingComment = await _context.Comments.Include(c => c.User).FirstOrDefaultAsync(c => c.CommentId == commentId);
 
             if (existingComment == null)
             {
                 return NotFound(new { message = "Comment not found" });
             }
 
+            //Update only the content
             existingComment.Content = commentUpdate.Content ?? existingComment.Content;
-            existingComment.CreatedAt = DateTime.UtcNow;
 
             try
             {
@@ -112,7 +88,7 @@ namespace homeCookAPI.Controllers
             {
                 if (!_context.Comments.Any(c => c.CommentId == commentId))
                 {
-                    return NotFound();
+                    return NotFound(new { message = "Comment not found." });
                 }
                 else
                 {
@@ -120,77 +96,80 @@ namespace homeCookAPI.Controllers
                 }
             }
 
+            // Return structured `CommentDTO`
             return Ok(new
             {
                 message = "Comment has been successfully updated!",
-                comment = new
+                comment = new CommentDTO
                 {
-                    existingComment.CommentId,
-                    existingComment.Content,
-                    existingComment.CreatedAt,
-                    existingComment.UserId,
-                    existingComment.RecipeId,
-                    existingComment.ParentCommentId
+                    CommentId = existingComment.CommentId,
+                    Content = existingComment.Content,
+                    CreatedAt = existingComment.CreatedAt, // Keeps original timestamp
+                    UserId = existingComment.UserId,
+                    UserName = existingComment.User?.FullName,
+                    RecipeId = existingComment.RecipeId
                 }
             });
         }
 
-
-        // POST: api/Comments
+        //api/Comments 
         [HttpPost]
-        public async Task<ActionResult<Comment>> PostComment(Comment comment)
+        public async Task<ActionResult<CommentDTO>> PostComment(CommentDTO commentDTO)
         {
             // Ensure the Recipe exists
-            var recipe = await _context.Recipes.FindAsync(comment.RecipeId);
+            var recipe = await _context.Recipes.FindAsync(commentDTO.RecipeId);
             if (recipe == null)
             {
                 return BadRequest(new { message = "Recipe not found" });
             }
 
             // Ensure the User exists
-            var user = await _context.Users.FindAsync(comment.UserId);
+            var user = await _context.Users.FindAsync(commentDTO.UserId);
             if (user == null)
             {
                 return BadRequest(new { message = "User not found" });
             }
 
             // Ensure Parent Comment exists if it's a reply
-            if (comment.ParentCommentId != null)
+            if (commentDTO.ParentCommentId != null)
             {
-                var parentComment = await _context.Comments.FindAsync(comment.ParentCommentId);
+                var parentComment = await _context.Comments.FindAsync(commentDTO.ParentCommentId);
                 if (parentComment == null)
                 {
                     return BadRequest(new { message = "Parent comment not found" });
                 }
             }
 
-            // Set CreatedAt automatically
-            comment.CreatedAt = DateTime.UtcNow;
-
-            // Prevent EF from expecting full objects
-            comment.User = null;
-            comment.Recipe = null;
-            comment.ParentComment = null;
+            // Convert `CommentDTO` to `Comment` before saving
+            var comment = new Comment
+            {
+                Content = commentDTO.Content,
+                CreatedAt = DateTime.UtcNow,
+                UserId = commentDTO.UserId,
+                RecipeId = commentDTO.RecipeId,
+                ParentCommentId = commentDTO.ParentCommentId
+            };
 
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
+            // Return structured `CommentDTO`
             return Ok(new
             {
                 message = "Comment has been successfully added!",
-                comment = new
+                comment = new CommentDTO
                 {
-                    comment.CommentId,
-                    comment.Content,
-                    comment.CreatedAt,
-                    comment.UserId,
-                    comment.RecipeId,
-                    comment.ParentCommentId
+                    CommentId = comment.CommentId,
+                    Content = comment.Content,
+                    CreatedAt = comment.CreatedAt,
+                    UserId = comment.UserId,
+                    UserName = user.FullName, //Return UserName instead of full user's details
+                    RecipeId = comment.RecipeId
                 }
             });
         }
 
-        // DELETE: api/Comments/5
+        // api/Comments/{commentId} 
         [HttpDelete("{commentId}")]
         public async Task<IActionResult> DeleteComment(int commentId)
         {
@@ -206,11 +185,10 @@ namespace homeCookAPI.Controllers
             return Ok(new { message = "Comment has been successfully deleted!" });
         }
 
-
+        // Check if a comment exists
         private bool CommentExists(int commentId)
         {
             return _context.Comments.Any(e => e.CommentId == commentId);
         }
-
     }
 }
