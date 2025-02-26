@@ -1,13 +1,6 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using homeCookAPI.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging; 
 
 namespace homeCookAPI.Controllers
 {
@@ -16,41 +9,31 @@ namespace homeCookAPI.Controllers
     [Authorize(Roles = "SuperAdmin")] 
     public class RolesController : ControllerBase
     {
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ILogger<RolesController> _logger; 
+        private readonly IRoleService _roleService;
+        private readonly ILogger<RolesController> _logger;  
 
-        public RolesController(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, ILogger<RolesController> logger)
+        public RolesController(IRoleService roleService, ILogger<RolesController> logger)
         {
-            _roleManager = roleManager;
-            _userManager = userManager;
+            _roleService = roleService;
             _logger = logger;
         }
-
+        
+        // api/roles
         [HttpGet]
-        public IActionResult GetRoles()
+        public async Task<IActionResult> GetRoles()
         {
             _logger.LogInformation("Fetching all roles...");
-
-            var roles = _roleManager.Roles.ToList();
-
+            var roles = await _roleService.GetAllRolesAsync();
             _logger.LogInformation("Successfully retrieved {Count} roles.", roles.Count);
             return Ok(roles);
         }
 
+        // api/roles
         [HttpPost]
         public async Task<IActionResult> CreateRole([FromBody] string roleName)
         {
             _logger.LogInformation("Attempting to create role: {RoleName}", roleName);
-
-            if (await _roleManager.RoleExistsAsync(roleName))
-            {
-                _logger.LogWarning("Role '{RoleName}' already exists.", roleName);
-                return BadRequest(new { message = "Role already exists." });
-            }
-
-            var role = new IdentityRole(roleName);
-            var result = await _roleManager.CreateAsync(role);
+            var result = await _roleService.CreateRoleAsync(roleName);
 
             if (result.Succeeded)
             {
@@ -62,38 +45,48 @@ namespace homeCookAPI.Controllers
             return BadRequest(result.Errors);
         }
 
+        // api/roles/assign-role-to-user
         [HttpPost("assign-role-to-user")]
         public async Task<IActionResult> AssignRoleToUser([FromBody] AssignRoleDTO assignRoleDTO)
         {
             _logger.LogInformation("Assigning role '{RoleName}' to User ID {UserId}.", assignRoleDTO.RoleName, assignRoleDTO.UserId);
 
-            var user = await _userManager.FindByIdAsync(assignRoleDTO.UserId);
-            if (user == null)
+            var success = await _roleService.AssignRoleToUserAsync(assignRoleDTO.UserId, assignRoleDTO.RoleName);
+            if (!success)
             {
-                _logger.LogWarning("Failed to assign role - User ID {UserId} not found.", assignRoleDTO.UserId);
-                return NotFound(new { message = "User not found." });
-            }
-
-            var roleExists = await _roleManager.RoleExistsAsync(assignRoleDTO.RoleName);
-            if (!roleExists)
-            {
-                _logger.LogWarning("Failed to assign role - Role '{RoleName}' not found.", assignRoleDTO.RoleName);
-                return NotFound(new { message = "Role not found." });
-            }
-
-            var result = await _userManager.AddToRoleAsync(user, assignRoleDTO.RoleName);
-            if (!result.Succeeded)
-            {
-                _logger.LogError("Failed to assign role '{RoleName}' to User ID {UserId}. Errors: {Errors}", assignRoleDTO.RoleName, assignRoleDTO.UserId, result.Errors);
-                return BadRequest(new { message = "Failed to assign role.", errors = result.Errors });
+                _logger.LogWarning("Failed to assign role '{RoleName}' to User ID {UserId}.", assignRoleDTO.RoleName, assignRoleDTO.UserId);
+                return BadRequest(new { message = "Failed to assign role." });
             }
 
             _logger.LogInformation("Successfully assigned role '{RoleName}' to User ID {UserId}.", assignRoleDTO.RoleName, assignRoleDTO.UserId);
-            return Ok(new AssignRoleDTO
-            {
-                UserId = assignRoleDTO.UserId,
-                RoleName = assignRoleDTO.RoleName
-            });
+            return Ok(new { message = $"Role '{assignRoleDTO.RoleName}' assigned successfully." });
         }
+
+        // api/roles/change-user-role
+        [HttpPost("change-user-role")]
+        public async Task<IActionResult> ChangeUserRole([FromBody] ChangeUserRoleDTO changeRoleDTO)
+        {
+            _logger.LogInformation("Changing role of User ID {UserId} to '{NewRole}'.", changeRoleDTO.UserId, changeRoleDTO.NewRole);
+
+            try
+            {
+                var success = await _roleService.ChangeUserRoleAsync(changeRoleDTO.UserId, changeRoleDTO.NewRole);
+                if (!success)
+                {
+                    _logger.LogWarning("Failed to change role for User ID {UserId}.", changeRoleDTO.UserId);
+                    return BadRequest(new { message = "Failed to change user role." });
+                }
+
+                _logger.LogInformation("Successfully changed role for User ID {UserId} to '{NewRole}'.", changeRoleDTO.UserId, changeRoleDTO.NewRole);
+                return Ok(new { message = $"User role changed to '{changeRoleDTO.NewRole}'." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _logger.LogWarning(ex.Message);
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+
     }
 }
