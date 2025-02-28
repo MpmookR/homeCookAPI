@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using homeCookAPI.Models;
 
@@ -10,9 +11,11 @@ using homeCookAPI.Models;
 namespace homeCookAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250227125530_EnableCascadeDelete_Clean")]
+    partial class EnableCascadeDelete_Clean
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
@@ -254,7 +257,7 @@ namespace homeCookAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("homeCookAPI.Models.Like", b =>
@@ -278,7 +281,7 @@ namespace homeCookAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Likes", (string)null);
+                    b.ToTable("Likes");
                 });
 
             modelBuilder.Entity("homeCookAPI.Models.Recipe", b =>
@@ -321,7 +324,7 @@ namespace homeCookAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Recipes", (string)null);
+                    b.ToTable("Recipes");
                 });
 
             modelBuilder.Entity("homeCookAPI.Models.RecipeRating", b =>
@@ -351,7 +354,7 @@ namespace homeCookAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RecipeRatings", (string)null);
+                    b.ToTable("RecipeRatings");
                 });
 
             modelBuilder.Entity("homeCookAPI.Models.SavedRecipe", b =>
@@ -380,7 +383,7 @@ namespace homeCookAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("SavedRecipes", (string)null);
+                    b.ToTable("SavedRecipes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

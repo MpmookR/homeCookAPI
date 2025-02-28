@@ -1,4 +1,6 @@
 using homeCookAPI.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public class CommentService : ICommentService
 {
@@ -13,36 +15,26 @@ public class CommentService : ICommentService
         _recipeRepository = recipeRepository;
     }
 
-    public async Task<IEnumerable<CommentDTO>> GetAllCommentsAsync()
-    {
-        var comments = await _commentRepository.GetAllAsync();
-        return comments.Select(MapToDTO);
-    }
-
-    public async Task<IEnumerable<CommentDTO>> GetCommentRepliesAsync(int commentId)
-    {
-        var replies = await _commentRepository.GetRepliesAsync(commentId);
-        return replies.Select(MapToDTO);
-    }
-
-    public async Task<CommentDTO> UpdateCommentAsync(int commentId, string newContent)
+    public async Task<CommentDTO> UpdateCommentAsync(int commentId, string userId, string newContent)
     {
         var comment = await _commentRepository.GetByIdAsync(commentId);
-        if (comment == null) throw new KeyNotFoundException($"Comment with ID {commentId} not found.");
+        if (comment == null)
+            throw new KeyNotFoundException($"Comment with ID {commentId} not found.");
 
-        comment.Content = newContent ?? comment.Content;
+        //the user can only edit their own comment
+        if (comment.UserId != userId)
+            throw new UnauthorizedAccessException("You are not authorized to update this comment.");
+
+        comment.Content = newContent;
         await _commentRepository.UpdateAsync(comment);
 
         return MapToDTO(comment);
     }
 
-    public async Task<CommentDTO> AddCommentAsync(CommentDTO commentDTO)
+    public async Task<CommentDTO> AddCommentAsync(string userId, CommentDTO commentDTO)
     {
         if (!await _recipeRepository.ExistsAsync(commentDTO.RecipeId))
             throw new KeyNotFoundException($"Recipe with ID {commentDTO.RecipeId} not found.");
-
-        if (!await _userRepository.ExistsAsync(commentDTO.UserId))
-            throw new KeyNotFoundException($"User with ID {commentDTO.UserId} not found.");
 
         if (commentDTO.ParentCommentId.HasValue && !await _commentRepository.ExistsAsync(commentDTO.ParentCommentId.Value))
             throw new KeyNotFoundException($"Parent comment with ID {commentDTO.ParentCommentId} not found.");
@@ -51,7 +43,7 @@ public class CommentService : ICommentService
         {
             Content = commentDTO.Content,
             CreatedAt = DateTime.UtcNow,
-            UserId = commentDTO.UserId,
+            UserId = userId,
             RecipeId = commentDTO.RecipeId,
             ParentCommentId = commentDTO.ParentCommentId
         };
@@ -60,10 +52,15 @@ public class CommentService : ICommentService
         return MapToDTO(comment);
     }
 
-    public async Task<bool> DeleteCommentAsync(int commentId)
+    public async Task<bool> DeleteCommentAsync(int commentId, string userId)
     {
         var comment = await _commentRepository.GetByIdAsync(commentId);
-        if (comment == null) throw new KeyNotFoundException($"Comment with ID {commentId} not found.");
+        if (comment == null)
+            throw new KeyNotFoundException($"Comment with ID {commentId} not found.");
+
+        // Ensure the user can only delete their own comment
+        if (comment.UserId != userId)
+            throw new UnauthorizedAccessException("You are not authorized to delete this comment.");
 
         await _commentRepository.DeleteAsync(comment);
         return true;
@@ -78,7 +75,8 @@ public class CommentService : ICommentService
             CreatedAt = comment.CreatedAt,
             UserId = comment.UserId,
             UserName = comment.User?.FullName,
-            RecipeId = comment.RecipeId
+            RecipeId = comment.RecipeId,
+            ParentCommentId = comment.ParentCommentId
         };
     }
 }

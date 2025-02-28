@@ -95,16 +95,16 @@ namespace homeCookAPI.Controllers
         // DELETE: api/Recipes/5
         [Authorize] // Any logged-in user can attempt this action
         [HttpDelete("{recipeId}")]
-        public async Task<IActionResult> DeleteRecipe(int id)
+        public async Task<IActionResult> DeleteRecipe(int RecipeId)
             {
-                _logger.LogInformation("Attempting to delete recipe with ID: {RecipeId}", id);
+                _logger.LogInformation("Attempting to delete recipe with ID: {RecipeId}", RecipeId);
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
 
                 try
                 {
-                    await _recipeService.DeleteRecipeAsync(id, userId, isAdmin);
-                    _logger.LogInformation("Recipe deleted successfully with ID: {RecipeId} by User ID: {UserId}", id, userId);
+                    await _recipeService.DeleteRecipeAsync(RecipeId, userId, isAdmin);
+                    _logger.LogInformation("Recipe deleted successfully with ID: {RecipeId} by User ID: {UserId}", RecipeId, userId);
                     return Ok(new { message = "Recipe deleted successfully!" });
                 }
                 catch (KeyNotFoundException ex)

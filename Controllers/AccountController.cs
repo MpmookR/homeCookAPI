@@ -24,7 +24,7 @@ namespace homeCookAPI.Controllers
         {
             _logger.LogInformation("User registration attempt: {Email}", model.Email);
 
-            var result = await _accountService.RegisterAsync(model);
+            var result = await _accountService.RegisterAsync(model); // Now it matches the class name
             if (!result.Succeeded)
             {
                 _logger.LogError("User registration failed: {Email}", model.Email);
@@ -96,11 +96,10 @@ namespace homeCookAPI.Controllers
             }
         }
 
-        // Report User only admin and user
         // api/account/report-user
         [Authorize]
         [HttpPost("report-user")]
-        public async Task<IActionResult> ReportUser([FromBody] ReportUserModel model)
+        public async Task<IActionResult> ReportUser([FromBody] ReportUser model)
         {
             var message = await _accountService.ReportUserAsync(model.UserId);
             if (message == null)

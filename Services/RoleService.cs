@@ -30,17 +30,13 @@ public class RoleService : IRoleService
         return await _roleRepository.CreateRoleAsync(role);
     }
 
-    public async Task<bool> ChangeUserRoleAsync(string userId, string newRole)
-    {
-        if (!await _roleRepository.RoleExistsAsync(newRole))
-            throw new KeyNotFoundException($"Role '{newRole}' does not exist.");
-
-        return await _roleRepository.ChangeUserRoleAsync(userId, newRole);
-    }
-
-
     public async Task<bool> AssignRoleToUserAsync(string userId, string roleName)
     {
         return await _roleRepository.AssignRoleToUserAsync(userId, roleName);
+    }
+
+    public async Task<bool> DeleteRoleAsync(string roleName) 
+    {
+        return await _roleRepository.DeleteRoleAsync(roleName);
     }
 }

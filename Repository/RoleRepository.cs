@@ -39,23 +39,13 @@ public class RoleRepository : IRoleRepository
         return result.Succeeded;
     }
 
-    public async Task<bool> ChangeUserRoleAsync(string userId, string newRole)
+    public async Task<bool> DeleteRoleAsync(string roleName) 
     {
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) return false;
+        var role = await _roleManager.FindByNameAsync(roleName);
+        if (role == null) return false;
 
-        var roleExists = await _roleManager.RoleExistsAsync(newRole);
-        if (!roleExists) return false;
-
-        var currentRoles = await _userManager.GetRolesAsync(user);
-        if (currentRoles.Count > 0)
-        {
-            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
-            if (!removeResult.Succeeded) return false;
-        }
-
-        var addResult = await _userManager.AddToRoleAsync(user, newRole);
-        return addResult.Succeeded;
+        var result = await _roleManager.DeleteAsync(role);
+        return result.Succeeded;
     }
 
 }

@@ -6,18 +6,18 @@ namespace homeCookAPI.Controllers
 {
     [Route("api/roles")]
     [ApiController]
-    [Authorize(Roles = "SuperAdmin")] 
+    [Authorize(Roles = "SuperAdmin")]
     public class RolesController : ControllerBase
     {
         private readonly IRoleService _roleService;
-        private readonly ILogger<RolesController> _logger;  
+        private readonly ILogger<RolesController> _logger;
 
         public RolesController(IRoleService roleService, ILogger<RolesController> logger)
         {
             _roleService = roleService;
             _logger = logger;
         }
-        
+
         // api/roles
         [HttpGet]
         public async Task<IActionResult> GetRoles()
@@ -47,7 +47,7 @@ namespace homeCookAPI.Controllers
 
         // api/roles/assign-role-to-user
         [HttpPost("assign-role-to-user")]
-        public async Task<IActionResult> AssignRoleToUser([FromBody] AssignRoleDTO assignRoleDTO)
+        public async Task<IActionResult> AssignRoleToUser([FromBody] AssignRole assignRoleDTO)
         {
             _logger.LogInformation("Assigning role '{RoleName}' to User ID {UserId}.", assignRoleDTO.RoleName, assignRoleDTO.UserId);
 
@@ -62,31 +62,21 @@ namespace homeCookAPI.Controllers
             return Ok(new { message = $"Role '{assignRoleDTO.RoleName}' assigned successfully." });
         }
 
-        // api/roles/change-user-role
-        [HttpPost("change-user-role")]
-        public async Task<IActionResult> ChangeUserRole([FromBody] ChangeUserRoleDTO changeRoleDTO)
+        // api/roles/Admin
+        [HttpDelete("{roleName}")]
+        public async Task<IActionResult> DeleteRole(string roleName)
         {
-            _logger.LogInformation("Changing role of User ID {UserId} to '{NewRole}'.", changeRoleDTO.UserId, changeRoleDTO.NewRole);
+            _logger.LogInformation("Attempting to delete role: {RoleName}", roleName);
 
-            try
+            var success = await _roleService.DeleteRoleAsync(roleName);
+            if (!success)
             {
-                var success = await _roleService.ChangeUserRoleAsync(changeRoleDTO.UserId, changeRoleDTO.NewRole);
-                if (!success)
-                {
-                    _logger.LogWarning("Failed to change role for User ID {UserId}.", changeRoleDTO.UserId);
-                    return BadRequest(new { message = "Failed to change user role." });
-                }
+                _logger.LogWarning("Failed to delete role '{RoleName}'.", roleName);
+                return BadRequest(new { message = "Failed to delete role." });
+            }
 
-                _logger.LogInformation("Successfully changed role for User ID {UserId} to '{NewRole}'.", changeRoleDTO.UserId, changeRoleDTO.NewRole);
-                return Ok(new { message = $"User role changed to '{changeRoleDTO.NewRole}'." });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                _logger.LogWarning(ex.Message);
-                return NotFound(new { message = ex.Message });
-            }
+            _logger.LogInformation("Successfully deleted role '{RoleName}'.", roleName);
+            return Ok(new { message = $"Role '{roleName}' deleted successfully." });
         }
-
-
     }
 }

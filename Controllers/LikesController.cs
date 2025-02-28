@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using homeCookAPI.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace homeCookAPI.Controllers
 {
@@ -47,14 +49,18 @@ namespace homeCookAPI.Controllers
 
 
         // api/likes
+        [Authorize]
         [HttpPost]
-        public async Task<ActionResult<LikeDTO>> PostLike(Like like)
+        public async Task<ActionResult<LikeDTO>> PostLike([FromBody] LikeDTO request)
         {
-            _logger.LogInformation("User {UserId} is attempting to like Recipe ID {RecipeId}.", like.UserId, like.RecipeId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Extract UserId from authentication
+
+            _logger.LogInformation("User {UserId} is attempting to like Recipe ID {RecipeId}.", userId, request.RecipeId);
+
             try
             {
-                var newLike = await _likeService.AddLikeAsync(like);
-                _logger.LogInformation("User {UserId} successfully liked Recipe ID {RecipeId}.", like.UserId, like.RecipeId);
+                var newLike = await _likeService.AddLikeAsync(userId, request.RecipeId);
+                _logger.LogInformation("User {UserId} successfully liked Recipe ID {RecipeId}.", userId, request.RecipeId);
                 return Ok(new { message = "Recipe successfully liked!", like = newLike });
             }
             catch (KeyNotFoundException ex)
@@ -68,6 +74,8 @@ namespace homeCookAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+
 
         // api/likes/recipe/{recipeId}/user/{userId}
         [HttpDelete("recipe/{recipeId}/user/{userId}")]

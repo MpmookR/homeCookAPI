@@ -2,8 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace homeCookAPI.Models
 {
-    public class LoginModel
+    public class RegisterModel
     {
+        [Required(ErrorMessage = "Full name is required")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Full name must be between 3 and 100 characters")]
+        public required string FullName { get; set; }
+
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress(ErrorMessage = "Invalid email format")]
         public required string Email { get; set; }

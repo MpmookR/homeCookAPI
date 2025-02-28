@@ -15,7 +15,10 @@ public class LikeRepository : ILikeRepository
 
     public async Task<IEnumerable<Like>> GetAllAsync()
     {
-        return await _context.Likes.Include(l => l.User).Include(l => l.Recipe).ToListAsync();
+        return await _context.Likes
+        .Include(l => l.User)
+        .Include(l => l.Recipe)
+        .ToListAsync();
     }
 
     public async Task<IEnumerable<Like>> GetByRecipeIdAsync(int recipeId)

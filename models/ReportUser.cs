@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace homeCookAPI.Models
 {
-    public class ReportUserModel
+    public class ReportUser
     {
-        public string UserId { get; set; }
+        [Required(ErrorMessage = "User ID is required")]
+        public required string UserId { get; set; }
     }
 }

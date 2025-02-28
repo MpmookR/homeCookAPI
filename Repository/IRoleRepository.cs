@@ -6,6 +6,6 @@ public interface IRoleRepository
     Task<bool> RoleExistsAsync(string roleName);
     Task<IdentityResult> CreateRoleAsync(IdentityRole role);
     Task<bool> AssignRoleToUserAsync(string userId, string roleName);
-    Task<bool> ChangeUserRoleAsync(string userId, string newRole); 
+    Task<bool> DeleteRoleAsync(string newRole); 
 
 }

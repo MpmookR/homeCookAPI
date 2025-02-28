@@ -10,29 +10,41 @@ var builder = WebApplication.CreateBuilder(args);
 
 //Ilogger
 builder.Logging.ClearProviders();
-builder.Logging.AddConsole();  //Enable Console Logging
-builder.Logging.AddDebug();    //Enable Debug Logging
+builder.Logging.AddConsole();  
+builder.Logging.AddDebug();    
 
 // Retrieve connection string from appsettings.json
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("Connection"))); 
+    options.UseSqlite(builder.Configuration.GetConnectionString("Connection")));
 
-// configure Identity
+// Identity service
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Register EmailSettings from appsettings.json
+// Register EmailSettings & email service
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-
-// Register EmailService for Dependency Injection
 builder.Services.AddScoped<EmailService>();
 
-// Add Authentication & Authorization
-builder.Services.AddAuthentication();
-builder.Services.AddAuthorization();
+//Repositories (Dependency Injection)
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
+builder.Services.AddScoped<ISavedRecipeRepository, SavedRecipeRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+builder.Services.AddScoped<IRecipeRatingRepository, RecipeRatingRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
-// Configure Controllers & JSON Options
+//Services: Business Logic Layer
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IRecipeService, RecipeService>();
+builder.Services.AddScoped<ISavedRecipeService, SavedRecipeService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<ILikeService, LikeService>();
+builder.Services.AddScoped<IRecipeRatingService, RecipeRatingService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+
+//  Controllers & JSON Options
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -43,25 +55,25 @@ builder.Services.AddControllers()
     });
 
 
-//JWT
+// JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-    .AddJwtBearer(options =>
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Issuer"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Issuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
 
 var app = builder.Build();
 

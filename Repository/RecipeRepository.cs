@@ -21,16 +21,17 @@ public class RecipeRepository : IRecipeRepository
             .ToListAsync();
     }
 
-    public async Task<Recipe> GetByIdAsync(int id)
-    {
-        return await _context.Recipes
-            .Include(r => r.User)
-            .Include(r => r.Comments)
-            .Include(r => r.Ratings)
-            .Include(r => r.Likes)
-            .Include(r => r.SavedRecipes)
-            .FirstOrDefaultAsync(r => r.RecipeId == id);
-    }
+public async Task<Recipe?> GetByIdAsync(int id)
+{
+    //Ensures all related data is available for MapToDTO()
+    return await _context.Recipes
+        .Where(r => r.RecipeId == id)
+        .Include(r => r.Comments) 
+        .Include(r => r.Likes) 
+        .Include(r => r.SavedRecipes) 
+        .Include(r => r.Ratings)
+        .FirstOrDefaultAsync();
+}
 
     public async Task<bool> ExistsAsync(int id)
     {

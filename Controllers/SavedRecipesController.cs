@@ -39,16 +39,16 @@ namespace homeCookAPI.Controllers
 
         // Save a recipe
         // api/savedrecipes >> body: "recipeId": 123
-        [Authorize] 
+        [Authorize]
         [HttpPost]
-        public async Task<ActionResult<SavedRecipeDTO>> PostSavedRecipe([FromBody] int recipeId)
+        public async Task<ActionResult<SavedRecipeDTO>> PostSavedRecipe([FromBody] SavedRecipeDTO request)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            _logger.LogInformation("User {UserId} is saving recipe {RecipeId}", userId, recipeId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); //Get UserId from authentication
+            _logger.LogInformation("User {UserId} is saving recipe {RecipeId}", userId, request.RecipeId);
 
             try
             {
-                var savedRecipe = await _savedRecipeService.SaveRecipeAsync(userId, recipeId);
+                var savedRecipe = await _savedRecipeService.SaveRecipeAsync(userId, request.RecipeId);
                 return Ok(new { message = "Recipe successfully saved!", savedRecipe });
             }
             catch (Exception ex)
@@ -57,7 +57,6 @@ namespace homeCookAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
         // Unsave a recipe
         // api/savedrecipes/{savedRecipeId}
         [Authorize] // Only logged-in users can unsave a recipe

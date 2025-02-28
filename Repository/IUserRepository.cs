@@ -1,23 +1,27 @@
 using homeCookAPI.Models;
 using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public interface IUserRepository
 {
-    // return ApplicationUser because Identity operations require the full entity
+    // Returns Full User Entities (For Internal Identity Operations)
     Task<ApplicationUser> GetByIdEntityAsync(string userId);
     Task<ApplicationUser> GetByEmailEntityAsync(string email);
+    Task<IEnumerable<ApplicationUser>> GetAllEntitiesAsync();
 
-    // return UserDTO for API responses
+    // Returns UserDTOs (For API Responses)
     Task<UserDTO> GetByIdAsync(string userId);
     Task<UserDTO> GetByEmailAsync(string email);
-    Task<IEnumerable<UserDTO>> GetAllAsync();
-    
+    Task<IEnumerable<UserDTO>> GetAllUsersWithRolesAsync(); 
+
+    // Create & Delete Users
     Task<IdentityResult> CreateAsync(ApplicationUser user, string password);
     Task<IdentityResult> DeleteAsync(ApplicationUser user);
+
+    // Get User Roles
     Task<IList<string>> GetRolesAsync(ApplicationUser user);
-    Task<bool> ExistsAsync(String userId);
+
+    // Check If User Exists
+    Task<bool> ExistsAsync(string userId);
 }
-
-
-
-//data access logic for ApplicationUser

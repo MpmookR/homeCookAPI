@@ -87,7 +87,45 @@ public class RecipeService : IRecipeService
             HowTo = recipe.HowTo,
             Image = recipe.Image,
             CreateDate = recipe.CreateDate,
-            UserId = recipe.UserId
+            UserId = recipe.UserId,
+            UserName = recipe.User?.FullName ?? "",
+
+            // Map related entities for all the entities to show on get
+            Comments = recipe.Comments.Select(c => new CommentDTO
+            {
+                CommentId = c.CommentId,
+                Content = c.Content,
+                CreatedAt = c.CreatedAt,
+                UserId = c.UserId,
+                UserName = c.User?.FullName,
+                RecipeId = c.RecipeId
+            }).ToList(),
+
+            Likes = recipe.Likes.Select(l => new LikeDTO
+            {
+                LikeId = l.LikeId,
+                UserId = l.UserId,
+                UserName = l.User?.FullName,
+                RecipeId = l.RecipeId
+            }).ToList(),
+
+            SavedRecipes = recipe.SavedRecipes.Select(s => new SavedRecipeDTO
+            {
+                SavedRecipeId = s.SavedRecipeId,
+                UserId = s.UserId,
+                UserName = s.User?.FullName,
+                RecipeId = s.RecipeId
+            }).ToList(),
+
+            Ratings = recipe.Ratings.Select(r => new RecipeRatingDTO
+            {
+                RecipeRatingId = r.RecipeRatingId,
+                UserId = r.UserId,
+                UserName = r.User?.FullName,
+                RecipeId = r.RecipeId,
+                Rating = r.Rating
+            }).ToList()
+
         };
     }
 }

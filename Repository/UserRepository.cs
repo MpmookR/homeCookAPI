@@ -22,19 +22,60 @@ public class UserRepository : IUserRepository
     public async Task<UserDTO> GetByIdAsync(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);
-        return user == null ? null : MapToDTO(user);
+        if (user == null) return null;
+
+        var roles = await _userManager.GetRolesAsync(user);
+        return new UserDTO
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            JoinDate = user.JoinDate,
+            Roles = roles.ToList()
+        };
     }
+
+    public async Task<IEnumerable<ApplicationUser>> GetAllEntitiesAsync()
+    {
+        return await _userManager.Users.ToListAsync();
+    }
+
 
     public async Task<UserDTO> GetByEmailAsync(string email)
     {
         var user = await _userManager.FindByEmailAsync(email);
-        return user == null ? null : MapToDTO(user);
+        if (user == null) return null;
+
+        var roles = await _userManager.GetRolesAsync(user);
+        return new UserDTO
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            JoinDate = user.JoinDate,
+            Roles = roles.ToList()
+        };
     }
 
-    public async Task<IEnumerable<UserDTO>> GetAllAsync()
+    public async Task<IEnumerable<UserDTO>> GetAllUsersWithRolesAsync()
     {
         var users = await _userManager.Users.ToListAsync();
-        return users.Select(user => MapToDTO(user));
+        var userDTOs = new List<UserDTO>();
+
+        foreach (var user in users)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            userDTOs.Add(new UserDTO
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                JoinDate = user.JoinDate,
+                Roles = roles.ToList()
+            });
+        }
+
+        return userDTOs;
     }
 
     public async Task<IdentityResult> CreateAsync(ApplicationUser user, string password) =>
@@ -50,19 +91,6 @@ public class UserRepository : IUserRepository
     {
         return await _userManager.FindByIdAsync(userId) != null;
     }
-
-    private static UserDTO MapToDTO(ApplicationUser user)
-    {
-        return new UserDTO
-        {
-            Id = user.Id,
-            FullName = user.FullName,
-            Email = user.Email,
-            JoinDate = user.JoinDate
-        };
-    }
 }
-
-
 
 // abstraction layer between the database and the service

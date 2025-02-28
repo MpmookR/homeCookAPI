@@ -96,16 +96,41 @@ public class AccountService : IAccountService
     // Get all users
     public async Task<IEnumerable<UserDTO>> GetUsersAsync()
     {
-        return await _userRepository.GetAllAsync();
+        var users = await _userRepository.GetAllEntitiesAsync();
+        var userDTOs = new List<UserDTO>();
+
+        foreach (var user in users)
+        {
+            var roles = await _userRepository.GetRolesAsync(user);
+            userDTOs.Add(new UserDTO
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                JoinDate = user.JoinDate,
+                Roles = roles.ToList()
+            });
+        }
+
+        return userDTOs;
     }
 
     // Get a single user as UserDTO
-        public async Task<UserDTO> GetUserByIdAsync(string id)
+    public async Task<UserDTO> GetUserByIdAsync(string id)
     {
-        var user = await _userRepository.GetByIdAsync(id);
+        var user = await _userRepository.GetByIdEntityAsync(id);
         if (user == null) throw new KeyNotFoundException($"User with ID {id} not found.");
-        
-        return user;
+
+        var roles = await _userRepository.GetRolesAsync(user);
+
+        return new UserDTO
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            JoinDate = user.JoinDate,
+            Roles = roles.ToList() 
+        };
     }
 
     // Report a user (returns a string message)

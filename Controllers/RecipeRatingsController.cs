@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using homeCookAPI.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace homeCookAPI.Controllers
 {
@@ -46,35 +48,25 @@ namespace homeCookAPI.Controllers
             }
         }
 
-        // GET: api/RecipeRatings/{recipeRatingId}
-        [HttpGet("{recipeRatingId}")]
-        public async Task<ActionResult<RecipeRatingDTO>> GetRecipeRating(int recipeRatingId)
-        {
-            _logger.LogInformation("Fetching rating with ID {RecipeRatingId}.", recipeRatingId);
-            try
-            {
-                var rating = await _recipeRatingService.GetRatingByIdAsync(recipeRatingId);
-                _logger.LogInformation("Successfully retrieved rating ID {RecipeRatingId}.", recipeRatingId);
-                return Ok(rating);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                _logger.LogWarning(ex.Message);
-                return NotFound(new { message = ex.Message });
-            }
-        }
-
-
         // POST: api/RecipeRatings
+        [Authorize]
         [HttpPost]
-        public async Task<ActionResult<RecipeRatingDTO>> PostRecipeRating(RecipeRating rating)
+        public async Task<ActionResult<RecipeRatingDTO>> PostRecipeRating([FromBody] RecipeRatingDTO request)
         {
-            _logger.LogInformation("User {UserId} is rating Recipe ID {RecipeId}.", rating.UserId, rating.RecipeId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                _logger.LogWarning("Unauthorized request: Unable to retrieve UserId from authentication.");
+                return Unauthorized(new { message = "Unauthorized request: Unable to determine user." });
+            }
+
+            _logger.LogInformation("User {UserId} is rating Recipe ID {RecipeId}.", userId, request.RecipeId);
+
             try
             {
-                var newRating = await _recipeRatingService.AddRatingAsync(rating);
-                _logger.LogInformation("User {UserId} successfully rated Recipe ID {RecipeId}.", rating.UserId, rating.RecipeId);
-                return CreatedAtAction(nameof(GetRecipeRating), new { recipeRatingId = newRating.RecipeRatingId }, newRating);
+                var newRating = await _recipeRatingService.AddRatingAsync(userId, request.RecipeId, request.Rating);
+                _logger.LogInformation("User {UserId} successfully rated Recipe ID {RecipeId}.", userId, request.RecipeId);
+                return CreatedAtAction(nameof(GetRatingsForRecipe), new { recipeId = newRating.RecipeId }, newRating);
             }
             catch (Exception ex)
             {
@@ -83,14 +75,25 @@ namespace homeCookAPI.Controllers
             }
         }
 
+
         // PUT: api/RecipeRatings/{recipeRatingId}
+        [Authorize]
         [HttpPut("{recipeRatingId}")]
-        public async Task<IActionResult> PutRecipeRating(int recipeRatingId, [FromBody] int newRating)
+        public async Task<IActionResult> PutRecipeRating(int recipeRatingId, [FromBody] RecipeRatingDTO request)
         {
-            _logger.LogInformation("Attempting to update rating ID {RecipeRatingId}.", recipeRatingId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+            {
+                _logger.LogWarning("Unauthorized request: Unable to retrieve UserId from authentication.");
+                return Unauthorized(new { message = "Unauthorized request: Unable to determine user." });
+            }
+
+            _logger.LogInformation("User {UserId} is attempting to update rating ID {RecipeRatingId}.", userId, recipeRatingId);
+
             try
             {
-                var updatedRating = await _recipeRatingService.UpdateRatingAsync(recipeRatingId, newRating);
+                var updatedRating = await _recipeRatingService.UpdateRatingAsync(recipeRatingId, userId, request.RecipeId, request.Rating);
                 _logger.LogInformation("Successfully updated rating ID {RecipeRatingId}.", recipeRatingId);
                 return Ok(new { message = "Rating updated successfully!", updatedRating = updatedRating.Rating });
             }
@@ -99,16 +102,26 @@ namespace homeCookAPI.Controllers
                 _logger.LogWarning(ex.Message);
                 return NotFound(new { message = ex.Message });
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex.Message);
+                return Forbid();
+            }
         }
 
+
         // DELETE: api/RecipeRatings/{recipeRatingId}
+        [Authorize]
         [HttpDelete("{recipeRatingId}")]
         public async Task<IActionResult> DeleteRecipeRating(int recipeRatingId)
         {
-            _logger.LogInformation("Attempting to delete rating ID {RecipeRatingId}.", recipeRatingId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
+
+            _logger.LogInformation("User {UserId} is attempting to delete rating ID {RecipeRatingId}.", userId, recipeRatingId);
+
             try
             {
-                await _recipeRatingService.RemoveRatingAsync(recipeRatingId);
+                await _recipeRatingService.RemoveRatingAsync(recipeRatingId, userId);
                 _logger.LogInformation("Successfully deleted rating ID {RecipeRatingId}.", recipeRatingId);
                 return Ok(new { message = "Rating successfully deleted!" });
             }
@@ -117,6 +130,12 @@ namespace homeCookAPI.Controllers
                 _logger.LogWarning(ex.Message);
                 return NotFound(new { message = ex.Message });
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex.Message);
+                return Forbid();
+            }
         }
+
     }
 }

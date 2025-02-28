@@ -28,21 +28,32 @@ public class LikeService : ILikeService
         return likes.Select(MapToDTO);
     }
 
-    public async Task<LikeDTO> AddLikeAsync(Like like)
+    public async Task<LikeDTO> AddLikeAsync(string userId, int recipeId)
     {
-        if (!await _recipeRepository.ExistsAsync(like.RecipeId))
-            throw new KeyNotFoundException($"Recipe with ID {like.RecipeId} not found.");
+        if (!await _recipeRepository.ExistsAsync(recipeId))
+            throw new KeyNotFoundException($"Recipe with ID {recipeId} not found.");
 
-        if (!await _userRepository.ExistsAsync(like.UserId))
-            throw new KeyNotFoundException($"User with ID {like.UserId} not found.");
+        if (!await _userRepository.ExistsAsync(userId))
+            throw new KeyNotFoundException($"User with ID {userId} not found.");
 
-        if (await _likeRepository.ExistsAsync(like.RecipeId, like.UserId))
+        if (await _likeRepository.ExistsAsync(recipeId, userId))
             throw new InvalidOperationException("User has already liked this recipe.");
 
-        like.CreatedAt = DateTime.UtcNow;
+        var like = new Like
+        {
+            UserId = userId,
+            RecipeId = recipeId,
+            CreatedAt = DateTime.UtcNow
+        };
+
         await _likeRepository.AddAsync(like);
-        return MapToDTO(like);
+
+        // Fetch the full Like object including Recipe after saving
+        var savedLike = await _likeRepository.GetByUserAndRecipeAsync(userId, recipeId);
+
+        return MapToDTO(savedLike);
     }
+
 
     public async Task<bool> UnlikeRecipeAsync(string userId, int recipeId)
     {
@@ -61,7 +72,6 @@ public class LikeService : ILikeService
             UserId = like.UserId,
             UserName = like.User?.FullName,
             RecipeId = like.RecipeId,
-            RecipeName = like.Recipe?.Name,
             CreatedAt = like.CreatedAt
         };
     }

@@ -57,6 +57,7 @@ public class SavedRecipeService : ISavedRecipeService
             SavedRecipeId = savedRecipe.SavedRecipeId,
             UserId = savedRecipe.UserId,
             RecipeId = savedRecipe.RecipeId,
+            RecipeName = savedRecipe.Recipe?.Name ?? "Unknown Recipe",
             CreatedAt = savedRecipe.CreatedAt
         };
     }
