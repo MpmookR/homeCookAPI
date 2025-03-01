@@ -61,8 +61,10 @@ jobs:
       - name: Deploy to Production Server
         run: |
           echo "Deploying to production..."
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-          cd /var/www/homecookapi &&
-          git pull origin main &&
-          dotnet publish -c Release &&
-          systemctl restart homecookapi"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd /var/www/homecookapi
+            git pull origin main
+            dotnet publish -c Release
+            systemctl restart homecookapi
+          EOF
+
