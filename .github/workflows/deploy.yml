@@ -29,3 +29,38 @@ jobs:
 
       - name: Run unit tests
         run: dotnet test --no-restore --verbosity normal
+
+  deploy:
+    needs: build  # Ensures deployment only runs after a successful build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.102'  
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Publish application
+        run: dotnet publish -c Release -o ./publish
+
+      - name: Set Environment Variables
+        run: |
+          echo "Setting environment variables..."
+          echo "DATABASE_CONNECTION=${{ secrets.DATABASE_CONNECTION }}" >> $GITHUB_ENV
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
+          echo "EMAIL_SENDER=${{ secrets.EMAIL_SENDER }}" >> $GITHUB_ENV
+
+      - name: Deploy to Production Server
+        run: |
+          echo "Deploying to production..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+          cd /var/www/homecookapi &&
+          git pull origin main &&
+          dotnet publish -c Release &&
+          systemctl restart homecookapi"
