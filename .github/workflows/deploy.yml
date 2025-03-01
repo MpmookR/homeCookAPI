@@ -30,3 +30,28 @@ jobs:
       - name: Run unit tests
         run: dotnet test --no-restore --verbosity normal
 
+  deploy:
+    needs: build 
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.102'  
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Set Environment Variables
+        run: |
+          echo "DATABASE_CONNECTION=${{ secrets.DATABASE_CONNECTION }}" >> $GITHUB_ENV
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
+          echo "JWT_ISSUER=${{ secrets.JWT_ISSUER }}" >> $GITHUB_ENV
+          echo "EMAIL_SENDER=${{ secrets.EMAIL_SENDER }}" >> $GITHUB_ENV
+
+      - name: Publish Application
+        run: dotnet publish -c Release -o ./publish
