@@ -19,7 +19,11 @@ namespace homeCookAPI.Controllers
             _logger = logger;
         }
 
-        // GET: api/RecipeRatings
+        /// <summary>
+        /// Retrieves all recipe ratings
+        /// </summary>
+        /// <returns>A list of all recipe ratings</returns>
+        /// <response code="200">Returns the list of recipe ratings</response>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RecipeRatingDTO>>> GetRecipeRatings()
         {
@@ -30,7 +34,13 @@ namespace homeCookAPI.Controllers
         }
 
 
-        // GET: api/RecipeRatings/recipe/{recipeId}
+        /// <summary>
+        /// Retrieves ratings for a specific recipe.
+        /// </summary>
+        /// <param name="recipeId">The unique identifier of the recipe.</param>
+        /// <returns>A list of ratings for the specified recipe.</returns>
+        /// <response code="200">Returns the list of ratings</response>
+        /// <response code="404">Recipe not found</response>
         [HttpGet("recipe/{recipeId}")]
         public async Task<ActionResult<IEnumerable<RecipeRatingDTO>>> GetRatingsForRecipe(int recipeId)
         {
@@ -48,7 +58,13 @@ namespace homeCookAPI.Controllers
             }
         }
 
-        // POST: api/RecipeRatings
+        /// <summary>
+        /// Adds a new rating for a recipe
+        /// </summary>
+        /// <param name="request">The recipe rating details</param>
+        /// <returns>The newly created rating</returns>
+        /// <response code="201">Recipe rating added successfully</response>
+        /// <response code="400">Invalid request</response>
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<RecipeRatingDTO>> PostRecipeRating([FromBody] RecipeRatingDTO request)
@@ -76,7 +92,14 @@ namespace homeCookAPI.Controllers
         }
 
 
-        // PUT: api/RecipeRatings/{recipeRatingId}
+        /// <summary>
+        /// Updates an existing rating
+        /// </summary>
+        /// <param name="recipeRatingId">The rating ID</param>
+        /// <param name="request">Updated rating details</param>
+        /// <returns>The updated rating</returns>
+        /// <response code="200">Rating updated successfully</response>
+        /// <response code="403">Unauthorized access</response>
         [Authorize]
         [HttpPut("{recipeRatingId}")]
         public async Task<IActionResult> PutRecipeRating(int recipeRatingId, [FromBody] RecipeRatingDTO request)
@@ -110,7 +133,13 @@ namespace homeCookAPI.Controllers
         }
 
 
-        // DELETE: api/RecipeRatings/{recipeRatingId}
+         /// <summary>
+        /// Deletes a rating.
+        /// </summary>
+        /// <param name="recipeRatingId">The ID of the rating to delete.</param>
+        /// <returns>A confirmation message if successful.</returns>
+        /// <response code="200">Rating deleted successfully</response>
+        /// <response code="403">Unauthorized access</response>
         [Authorize]
         [HttpDelete("{recipeRatingId}")]
         public async Task<IActionResult> DeleteRecipeRating(int recipeRatingId)

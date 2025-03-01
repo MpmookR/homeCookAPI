@@ -308,3 +308,8 @@
 /Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/obj/Debug/net9.0/homeCookAPI.pdb
 /Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/obj/Debug/net9.0/homeCookAPI.genruntimeconfig.cache
 /Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/obj/Debug/net9.0/ref/homeCookAPI.dll
+/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/bin/Debug/net9.0/homeCookAPI.xml
+/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/bin/Debug/net9.0/Swashbuckle.AspNetCore.Swagger.dll
+/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/obj/Debug/net9.0/homeCookAPI.xml

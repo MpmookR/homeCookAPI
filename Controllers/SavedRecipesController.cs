@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using homeCookAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -19,8 +18,13 @@ namespace homeCookAPI.Controllers
             _logger = logger;
         }
 
-        // Get saved recipes for a specific user
-        // api/savedrecipes/user/{userId}
+        /// <summary>
+        /// Retrieves all saved recipes for a specific user
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>A list of saved recipes</returns>
+        /// <response code="200">Returns the list of saved recipes</response>
+        /// <response code="403">Unauthorized access</response>
         [Authorize]
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<IEnumerable<SavedRecipeDTO>>> GetSavedRecipesByUser(string userId)
@@ -37,8 +41,13 @@ namespace homeCookAPI.Controllers
             return Ok(savedRecipes);
         }
 
-        // Save a recipe
-        // api/savedrecipes >> body: "recipeId": 123
+        /// <summary>
+        /// Saves a recipe for the logged-in user
+        /// </summary>
+        /// <param name="request">The recipe ID to save</param>
+        /// <returns>The saved recipe details</returns>
+        /// <response code="200">Recipe saved successfully</response>
+        /// <response code="400">Invalid request</response>
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<SavedRecipeDTO>> PostSavedRecipe([FromBody] SavedRecipeDTO request)
@@ -57,9 +66,15 @@ namespace homeCookAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        // Unsave a recipe
-        // api/savedrecipes/{savedRecipeId}
-        [Authorize] // Only logged-in users can unsave a recipe
+        
+        /// <summary>
+        /// Removes a saved recipe for the logged-in user
+        /// </summary>
+        /// <param name="savedRecipeId">The ID of the saved recipe.</param>
+        /// <returns>A confirmation message if the recipe was successfully removed</returns>
+        /// <response code="200">Recipe removed successfully</response>
+        /// <response code="400">Invalid request</response>
+        [Authorize]
         [HttpDelete("{savedRecipeId}")]
         public async Task<IActionResult> DeleteSavedRecipe(int savedRecipeId)
         {

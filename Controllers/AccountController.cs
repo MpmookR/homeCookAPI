@@ -17,8 +17,13 @@ namespace homeCookAPI.Controllers
             _logger = logger;
         }
 
-        // Register a new user with email verification
-        // api/account/register
+        /// <summary>
+        /// Registers a new user and sends an email verification
+        /// </summary>
+        /// <param name="model">User registration details</param>
+        /// <returns>A success message if registration is completed</returns>
+        /// <response code="200">User registered successfully</response>
+        /// <response code="400">Invalid registration request</response>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
@@ -34,8 +39,14 @@ namespace homeCookAPI.Controllers
             return Ok(new { message = "User registered successfully! Please check your email for verification." });
         }
 
-
-        // Verify Email
+        /// <summary>
+        /// Verifies a user's email address
+        /// </summary>
+        /// <param name="userId">The ID of the user</param>
+        /// <param name="token">The verification token</param>
+        /// <returns>A success message if the email is verified</returns>
+        /// <response code="200">Email verified successfully</response>
+        /// <response code="400">Invalid or expired token</response>
         [HttpGet("verify-email")]
         public async Task<IActionResult> VerifyEmail(string userId, string token)
         {
@@ -52,8 +63,13 @@ namespace homeCookAPI.Controllers
             return Ok(new { message = "Email verified successfully! You can now log in." });
         }
 
-        // Restricts login until email is verified
-        // api/account/login
+        /// <summary>
+        /// Authenticates a user and returns a JWT token
+        /// </summary>
+        /// <param name="model">User login credentials</param>
+        /// <returns>A JWT token if authentication is successful</returns>
+        /// <response code="200">Login successful</response>
+        /// <response code="401">Invalid credentials or email not verified</response>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -70,8 +86,12 @@ namespace homeCookAPI.Controllers
             return Ok(new { message = "Login successful!", token });
         }
 
-        // Get all users (Uses DTO)
-        // api/account/users  >> header: Authorization: Bearer {JWT_TOKEN}
+        /// <summary>
+        /// Retrieves all registered users
+        /// </summary>
+        /// <returns>A list of all users</returns>
+        /// <response code="200">Returns the list of users</response>
+        [Authorize]
         [HttpGet("users")]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
@@ -79,8 +99,14 @@ namespace homeCookAPI.Controllers
             return Ok(users);
         }
 
-        // Get user by ID (Uses DTO)
-        // api/account/users/{USER_ID}
+        /// <summary>
+        /// Retrieves a specific user by ID
+        /// </summary>
+        /// <param name="id">The ID of the user</param>
+        /// <returns>User details if found</returns>
+        /// <response code="200">Returns the user</response>
+        /// <response code="404">User not found</response>
+        [Authorize]
         [HttpGet("users/{id}")]
         public async Task<ActionResult<UserDTO>> GetUserById(string id)
         {
@@ -96,7 +122,13 @@ namespace homeCookAPI.Controllers
             }
         }
 
-        // api/account/report-user
+        /// <summary>
+        /// Reports a user for misconduct
+        /// </summary>
+        /// <param name="model">The user ID being reported</param>
+        /// <returns>A confirmation message if the report is submitted</returns>
+        /// <response code="200">User reported successfully</response>
+        /// <response code="404">User not found</response>
         [Authorize]
         [HttpPost("report-user")]
         public async Task<IActionResult> ReportUser([FromBody] ReportUser model)
@@ -111,8 +143,12 @@ namespace homeCookAPI.Controllers
             return Ok(new { message });
         }
 
-        // api/account/logout
-        [HttpPost("logout")]
+        /// <summary>
+        /// Logs out the current user
+        /// </summary>
+        /// <returns>A success message if logout is completed</returns>
+        /// <response code="200">User successfully logged out</response>
+        [HttpPost("logout")]      
         public async Task<IActionResult> Logout()
         {
             _logger.LogInformation("User logout requested.");
@@ -121,8 +157,13 @@ namespace homeCookAPI.Controllers
             return Ok(new { message = "User successfully signed out" });
         }
 
-        // Delete user by ID (SuperAdmin only)
-        // api/account/users/{USER_ID} >> header: Authorization: Bearer {JWT_TOKEN}
+        /// <summary>
+        /// Deletes a user account (SuperAdmin only)
+        /// </summary>
+        /// <param name="id">The ID of the user to delete</param>
+        /// <returns>A success message if deletion is completed</returns>
+        /// <response code="200">User deleted successfully</response>
+        /// <response code="404">User not found</response>
         [Authorize(Roles = "SuperAdmin")]
         [HttpDelete("users/{id}")]
         public async Task<IActionResult> DeleteUser(string id)

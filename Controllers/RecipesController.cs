@@ -18,7 +18,12 @@ namespace homeCookAPI.Controllers
             _recipeService = recipeService;
             _logger = logger;
         }
-        // GET: api/Recipes
+
+        /// <summary>
+        /// Retrieves all recipes, showing related entitied(Like, comment, save, rating)
+        /// </summary>
+        /// <returns>A list of all recipes in the system.</returns>
+        /// <response code="200">Returns the list of recipes</response>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RecipeDTO>>> GetRecipes()
         {
@@ -29,7 +34,13 @@ namespace homeCookAPI.Controllers
             return Ok(recipes);
         }
 
-        // Get a single recipe by ID and include user details
+        /// <summary>
+        /// Retrieves a specific recipe by ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the recipe.</param>
+        /// <returns>The details of the requested recipe.</returns>
+        /// <response code="200">Returns the requested recipe</response>
+        /// <response code="404">Recipe not found</response>        
         [HttpGet("{id}")]    
         public async Task<ActionResult<RecipeDTO>> GetRecipe(int id)
         {
@@ -46,8 +57,16 @@ namespace homeCookAPI.Controllers
                 return NotFound(new { message = ex.Message });
             }
         }
-
-        // PUT: api/Recipes/5
+        
+        /// <summary>
+        /// Updates an existing recipe.
+        /// </summary>
+        /// <param name="id">The unique identifier of the recipe to be updated.</param>
+        /// <param name="recipeDTO">The updated recipe data.</param>
+        /// <returns>The updated recipe details.</returns>
+        /// <response code="200">Recipe updated successfully</response>
+        /// <response code="404">Recipe not found</response>
+        /// <response code="403">Unauthorized access</response>
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutRecipe(int id, RecipeDTO recipeDTO)
@@ -73,7 +92,13 @@ namespace homeCookAPI.Controllers
             }
         }
 
-        // POST: api/Recipes
+        /// <summary>
+        /// Creates a new recipe.
+        /// </summary>
+        /// <param name="recipeDTO">The recipe data to be created.</param>
+        /// <returns>The newly created recipe.</returns>
+        /// <response code="201">Recipe created successfully</response>
+        /// <response code="400">Invalid request data</response>
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<RecipeDTO>> PostRecipe(RecipeDTO recipeDTO)
@@ -92,7 +117,14 @@ namespace homeCookAPI.Controllers
             }
         }
 
-        // DELETE: api/Recipes/5
+        /// <summary>
+        /// Deletes a recipe by ID.
+        /// </summary>
+        /// <param name="recipeId">The unique identifier of the recipe to be deleted.</param>
+        /// <returns>A message indicating whether the deletion was successful.</returns>
+        /// <response code="200">Recipe deleted successfully</response>
+        /// <response code="404">Recipe not found</response>
+        /// <response code="403">Unauthorized access</response>
         [Authorize] // Any logged-in user can attempt this action
         [HttpDelete("{recipeId}")]
         public async Task<IActionResult> DeleteRecipe(int RecipeId)

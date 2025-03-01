@@ -19,17 +19,13 @@ namespace homeCookAPI.Controllers
             _logger = logger;
         }
 
-        // api/likes
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<LikeDTO>>> GetLikes()
-        {
-            _logger.LogInformation("Fetching all likes from the database...");
-            var likes = await _likeService.GetAllLikesAsync();
-            _logger.LogInformation("Successfully retrieved {Count} likes.", likes.Count());
-            return Ok(likes);
-        }
-
-        // api/likes/recipe/{recipeId}
+        /// <summary>
+        /// Retrieves likes for a specific recipe
+        /// </summary>
+        /// <param name="recipeId">The unique identifier of the recipe</param>
+        /// <returns>A list of likes for the specified recipe.</returns>
+        /// <response code="200">Returns the list of likes</response>
+        /// <response code="404">Recipe not found</response>        
         [HttpGet("recipe/{recipeId}")]
         public async Task<ActionResult<IEnumerable<LikeDTO>>> GetLikesByRecipe(int recipeId)
         {
@@ -48,7 +44,13 @@ namespace homeCookAPI.Controllers
         }
 
 
-        // api/likes
+        /// <summary>
+        /// Likes a recipe
+        /// </summary>
+        /// <param name="request">The recipe ID to like</param>
+        /// <returns>The like details.</returns>
+        /// <response code="200">Recipe liked successfully</response>
+        /// <response code="400">Invalid request</response>
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<LikeDTO>> PostLike([FromBody] LikeDTO request)
@@ -75,9 +77,14 @@ namespace homeCookAPI.Controllers
             }
         }
 
-
-
-        // api/likes/recipe/{recipeId}/user/{userId}
+        /// <summary>
+        /// Unlikes a recipe
+        /// </summary>
+        /// <param name="recipeId">The ID of the recipe to unlike</param>
+        /// <param name="userId">The ID of the user unliking the recipe</param>
+        /// <returns>A confirmation message if successful.</returns>
+        /// <response code="200">Recipe unliked successfully</response>
+        /// <response code="404">Recipe not found</response>
         [HttpDelete("recipe/{recipeId}/user/{userId}")]
         public async Task<IActionResult> UnlikeRecipe(int recipeId, string userId)
         {

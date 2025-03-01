@@ -5,6 +5,7 @@ using homeCookAPI.Services;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -75,7 +76,36 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+//  Swagger service
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "HomeCookAPI",
+        Version = "v1",
+        Description = "API Documentation for HomeCookAPI",
+        Contact = new OpenApiContact
+        {
+            Name = "Your Name",
+            Email = "your.email@example.com",
+            Url = new Uri("https://github.com/MpmookR/homeCookAPI")
+        }
+    });
+});
+
 var app = builder.Build();
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    // Enable Swagger in Development
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "HomeCookAPI v1");
+        c.RoutePrefix = "api-docs"; // Accessible at /api-docs
+    });
+}
 
 // Enable Authentication & Authorization Middleware
 app.UseAuthentication();

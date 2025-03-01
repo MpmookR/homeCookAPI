@@ -1,0 +1,346 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>homeCookAPI</name>
+    </assembly>
+    <members>
+        <member name="M:homeCookAPI.Controllers.AccountController.Register(homeCookAPI.Models.RegisterModel)">
+            <summary>
+            Registers a new user and sends an email verification
+            </summary>
+            <param name="model">User registration details</param>
+            <returns>A success message if registration is completed</returns>
+            <response code="200">User registered successfully</response>
+            <response code="400">Invalid registration request</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.AccountController.VerifyEmail(System.String,System.String)">
+            <summary>
+            Verifies a user's email address
+            </summary>
+            <param name="userId">The ID of the user</param>
+            <param name="token">The verification token</param>
+            <returns>A success message if the email is verified</returns>
+            <response code="200">Email verified successfully</response>
+            <response code="400">Invalid or expired token</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.AccountController.Login(homeCookAPI.Models.LoginModel)">
+            <summary>
+            Authenticates a user and returns a JWT token
+            </summary>
+            <param name="model">User login credentials</param>
+            <returns>A JWT token if authentication is successful</returns>
+            <response code="200">Login successful</response>
+            <response code="401">Invalid credentials or email not verified</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.AccountController.GetUsers">
+            <summary>
+            Retrieves all registered users
+            </summary>
+            <returns>A list of all users</returns>
+            <response code="200">Returns the list of users</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.AccountController.GetUserById(System.String)">
+            <summary>
+            Retrieves a specific user by ID
+            </summary>
+            <param name="id">The ID of the user</param>
+            <returns>User details if found</returns>
+            <response code="200">Returns the user</response>
+            <response code="404">User not found</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.AccountController.ReportUser(homeCookAPI.Models.ReportUser)">
+            <summary>
+            Reports a user for misconduct
+            </summary>
+            <param name="model">The user ID being reported</param>
+            <returns>A confirmation message if the report is submitted</returns>
+            <response code="200">User reported successfully</response>
+            <response code="404">User not found</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.AccountController.Logout">
+            <summary>
+            Logs out the current user
+            </summary>
+            <returns>A success message if logout is completed</returns>
+            <response code="200">User successfully logged out</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.AccountController.DeleteUser(System.String)">
+            <summary>
+            Deletes a user account (SuperAdmin only)
+            </summary>
+            <param name="id">The ID of the user to delete</param>
+            <returns>A success message if deletion is completed</returns>
+            <response code="200">User deleted successfully</response>
+            <response code="404">User not found</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.CommentsController.PutComment(System.Int32,homeCookAPI.Models.CommentDTO)">
+            <summary>
+            Updates an existing comment
+            </summary>
+            <param name="commentId">The ID of the comment to update</param>
+            <param name="request">Updated comment details</param>
+            <returns>The updated comment</returns>
+            <response code="200">Comment updated successfully</response>
+            <response code="403">Unauthorized access</response>
+            <response code="404">Comment not found</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.CommentsController.PostComment(homeCookAPI.Models.CommentDTO)">
+            <summary>
+            Adds a new comment to a recipe
+            </summary>
+            <param name="request">The comment details</param>
+            <returns>The newly created comment</returns>
+            <response code="200">Comment added successfully</response>
+            <response code="400">Invalid request</response>        
+        </member>
+        <member name="M:homeCookAPI.Controllers.CommentsController.DeleteComment(System.Int32)">
+            <summary>
+            Deletes a comment
+            </summary>
+            <param name="commentId">The ID of the comment to delete.</param>
+            <returns>A confirmation message if successful</returns>
+            <response code="200">Comment deleted successfully</response>
+            <response code="403">Unauthorized access</response>
+            <response code="404">Comment not found</response>        
+        </member>
+        <member name="M:homeCookAPI.Controllers.LikesController.GetLikesByRecipe(System.Int32)">
+            <summary>
+            Retrieves likes for a specific recipe
+            </summary>
+            <param name="recipeId">The unique identifier of the recipe</param>
+            <returns>A list of likes for the specified recipe.</returns>
+            <response code="200">Returns the list of likes</response>
+            <response code="404">Recipe not found</response>        
+        </member>
+        <member name="M:homeCookAPI.Controllers.LikesController.PostLike(homeCookAPI.Models.LikeDTO)">
+            <summary>
+            Likes a recipe
+            </summary>
+            <param name="request">The recipe ID to like</param>
+            <returns>The like details.</returns>
+            <response code="200">Recipe liked successfully</response>
+            <response code="400">Invalid request</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.LikesController.UnlikeRecipe(System.Int32,System.String)">
+            <summary>
+            Unlikes a recipe
+            </summary>
+            <param name="recipeId">The ID of the recipe to unlike</param>
+            <param name="userId">The ID of the user unliking the recipe</param>
+            <returns>A confirmation message if successful.</returns>
+            <response code="200">Recipe unliked successfully</response>
+            <response code="404">Recipe not found</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipeRatingsController.GetRecipeRatings">
+            <summary>
+            Retrieves all recipe ratings
+            </summary>
+            <returns>A list of all recipe ratings</returns>
+            <response code="200">Returns the list of recipe ratings</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipeRatingsController.GetRatingsForRecipe(System.Int32)">
+            <summary>
+            Retrieves ratings for a specific recipe.
+            </summary>
+            <param name="recipeId">The unique identifier of the recipe.</param>
+            <returns>A list of ratings for the specified recipe.</returns>
+            <response code="200">Returns the list of ratings</response>
+            <response code="404">Recipe not found</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipeRatingsController.PostRecipeRating(homeCookAPI.Models.RecipeRatingDTO)">
+            <summary>
+            Adds a new rating for a recipe
+            </summary>
+            <param name="request">The recipe rating details</param>
+            <returns>The newly created rating</returns>
+            <response code="201">Recipe rating added successfully</response>
+            <response code="400">Invalid request</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipeRatingsController.PutRecipeRating(System.Int32,homeCookAPI.Models.RecipeRatingDTO)">
+            <summary>
+            Updates an existing rating
+            </summary>
+            <param name="recipeRatingId">The rating ID</param>
+            <param name="request">Updated rating details</param>
+            <returns>The updated rating</returns>
+            <response code="200">Rating updated successfully</response>
+            <response code="403">Unauthorized access</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipeRatingsController.DeleteRecipeRating(System.Int32)">
+            <summary>
+            Deletes a rating.
+            </summary>
+            <param name="recipeRatingId">The ID of the rating to delete.</param>
+            <returns>A confirmation message if successful.</returns>
+            <response code="200">Rating deleted successfully</response>
+            <response code="403">Unauthorized access</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipesController.GetRecipes">
+            <summary>
+            Retrieves all recipes, showing related entitied(Like, comment, save, rating)
+            </summary>
+            <returns>A list of all recipes in the system.</returns>
+            <response code="200">Returns the list of recipes</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipesController.GetRecipe(System.Int32)">
+            <summary>
+            Retrieves a specific recipe by ID.
+            </summary>
+            <param name="id">The unique identifier of the recipe.</param>
+            <returns>The details of the requested recipe.</returns>
+            <response code="200">Returns the requested recipe</response>
+            <response code="404">Recipe not found</response>        
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipesController.PutRecipe(System.Int32,homeCookAPI.Models.RecipeDTO)">
+            <summary>
+            Updates an existing recipe.
+            </summary>
+            <param name="id">The unique identifier of the recipe to be updated.</param>
+            <param name="recipeDTO">The updated recipe data.</param>
+            <returns>The updated recipe details.</returns>
+            <response code="200">Recipe updated successfully</response>
+            <response code="404">Recipe not found</response>
+            <response code="403">Unauthorized access</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipesController.PostRecipe(homeCookAPI.Models.RecipeDTO)">
+            <summary>
+            Creates a new recipe.
+            </summary>
+            <param name="recipeDTO">The recipe data to be created.</param>
+            <returns>The newly created recipe.</returns>
+            <response code="201">Recipe created successfully</response>
+            <response code="400">Invalid request data</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RecipesController.DeleteRecipe(System.Int32)">
+            <summary>
+            Deletes a recipe by ID.
+            </summary>
+            <param name="recipeId">The unique identifier of the recipe to be deleted.</param>
+            <returns>A message indicating whether the deletion was successful.</returns>
+            <response code="200">Recipe deleted successfully</response>
+            <response code="404">Recipe not found</response>
+            <response code="403">Unauthorized access</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RolesController.GetRoles">
+            <summary>
+            Retrieves all roles.
+            </summary>
+            <returns>A list of roles available in the system</returns>
+            <response code="200">Returns the list of roles</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RolesController.CreateRole(System.String)">
+            <summary>
+            Creates a new role.
+            </summary>
+            <param name="roleName">The name of the role to create</param>
+            <returns>A confirmation message if the role is created</returns>
+            <response code="200">Role created successfully</response>
+            <response code="400">Invalid request or role creation failed</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RolesController.AssignRoleToUser(homeCookAPI.Models.AssignRole)">
+            <summary>
+            Assigns a role to a user.
+            </summary>
+            <param name="assignRoleDTO">The user ID and role name to assign</param>
+            <returns>A confirmation message if the role is assigned</returns>
+            <response code="200">Role assigned successfully</response>
+            <response code="400">Invalid request or role assignment failed</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.RolesController.DeleteRole(System.String)">
+            <summary>
+            Deletes a role by name.
+            </summary>
+            <param name="roleName">The name of the role to delete.</param>
+            <returns>A confirmation message if the role is deleted.</returns>
+            <response code="200">Role deleted successfully</response>
+            <response code="400">Invalid request or deletion failed</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.SavedRecipesController.GetSavedRecipesByUser(System.String)">
+            <summary>
+            Retrieves all saved recipes for a specific user
+            </summary>
+            <param name="userId">The unique identifier of the user</param>
+            <returns>A list of saved recipes</returns>
+            <response code="200">Returns the list of saved recipes</response>
+            <response code="403">Unauthorized access</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.SavedRecipesController.PostSavedRecipe(homeCookAPI.Models.SavedRecipeDTO)">
+            <summary>
+            Saves a recipe for the logged-in user
+            </summary>
+            <param name="request">The recipe ID to save</param>
+            <returns>The saved recipe details</returns>
+            <response code="200">Recipe saved successfully</response>
+            <response code="400">Invalid request</response>
+        </member>
+        <member name="M:homeCookAPI.Controllers.SavedRecipesController.DeleteSavedRecipe(System.Int32)">
+            <summary>
+            Removes a saved recipe for the logged-in user
+            </summary>
+            <param name="savedRecipeId">The ID of the saved recipe.</param>
+            <returns>A confirmation message if the recipe was successfully removed</returns>
+            <response code="200">Recipe removed successfully</response>
+            <response code="400">Invalid request</response>
+        </member>
+        <member name="T:homeCookAPI.Migrations.RenameIdsToSavedRecipeIdAndRecipeRatingId">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.RenameIdsToSavedRecipeIdAndRecipeRatingId.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.RenameIdsToSavedRecipeIdAndRecipeRatingId.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.RenameIdsToSavedRecipeIdAndRecipeRatingId.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:homeCookAPI.Migrations.MakeUserIdNullableInComment">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.MakeUserIdNullableInComment.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.MakeUserIdNullableInComment.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.MakeUserIdNullableInComment.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:homeCookAPI.Migrations.RenameCreateDateToCreatedAt">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.RenameCreateDateToCreatedAt.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.RenameCreateDateToCreatedAt.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.RenameCreateDateToCreatedAt.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:homeCookAPI.Migrations.RemoveCustomUserId">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.RemoveCustomUserId.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.RemoveCustomUserId.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.RemoveCustomUserId.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:homeCookAPI.Migrations.EnableCascadeDelete_Clean">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.EnableCascadeDelete_Clean.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.EnableCascadeDelete_Clean.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:homeCookAPI.Migrations.EnableCascadeDelete_Clean.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

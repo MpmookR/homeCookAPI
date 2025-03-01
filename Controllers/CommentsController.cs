@@ -18,7 +18,15 @@ namespace homeCookAPI.Controllers
             _logger = logger;
         }
 
-        // api/Comments/{commentId} 
+        /// <summary>
+        /// Updates an existing comment
+        /// </summary>
+        /// <param name="commentId">The ID of the comment to update</param>
+        /// <param name="request">Updated comment details</param>
+        /// <returns>The updated comment</returns>
+        /// <response code="200">Comment updated successfully</response>
+        /// <response code="403">Unauthorized access</response>
+        /// <response code="404">Comment not found</response>
         [Authorize]
         [HttpPut("{commentId}")]
         public async Task<IActionResult> PutComment(int commentId, [FromBody] CommentDTO request)
@@ -45,9 +53,13 @@ namespace homeCookAPI.Controllers
             }
         }
 
-
-
-        //api/Comments 
+        /// <summary>
+        /// Adds a new comment to a recipe
+        /// </summary>
+        /// <param name="request">The comment details</param>
+        /// <returns>The newly created comment</returns>
+        /// <response code="200">Comment added successfully</response>
+        /// <response code="400">Invalid request</response>        
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<CommentDTO>> PostComment([FromBody] CommentDTO request)
@@ -75,7 +87,14 @@ namespace homeCookAPI.Controllers
             }
         }
 
-        // api/Comments/{commentId} 
+        /// <summary>
+        /// Deletes a comment
+        /// </summary>
+        /// <param name="commentId">The ID of the comment to delete.</param>
+        /// <returns>A confirmation message if successful</returns>
+        /// <response code="200">Comment deleted successfully</response>
+        /// <response code="403">Unauthorized access</response>
+        /// <response code="404">Comment not found</response>        
         [Authorize]
         [HttpDelete("{commentId}")]
         public async Task<IActionResult> DeleteComment(int commentId)

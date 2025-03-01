@@ -6,7 +6,7 @@ namespace homeCookAPI.Controllers
 {
     [Route("api/roles")]
     [ApiController]
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = "SuperAdmin")]  //only SuperAdmin can perform role feature
     public class RolesController : ControllerBase
     {
         private readonly IRoleService _roleService;
@@ -18,7 +18,11 @@ namespace homeCookAPI.Controllers
             _logger = logger;
         }
 
-        // api/roles
+        /// <summary>
+        /// Retrieves all roles.
+        /// </summary>
+        /// <returns>A list of roles available in the system</returns>
+        /// <response code="200">Returns the list of roles</response>
         [HttpGet]
         public async Task<IActionResult> GetRoles()
         {
@@ -28,7 +32,13 @@ namespace homeCookAPI.Controllers
             return Ok(roles);
         }
 
-        // api/roles
+        /// <summary>
+        /// Creates a new role.
+        /// </summary>
+        /// <param name="roleName">The name of the role to create</param>
+        /// <returns>A confirmation message if the role is created</returns>
+        /// <response code="200">Role created successfully</response>
+        /// <response code="400">Invalid request or role creation failed</response>
         [HttpPost]
         public async Task<IActionResult> CreateRole([FromBody] string roleName)
         {
@@ -45,7 +55,13 @@ namespace homeCookAPI.Controllers
             return BadRequest(result.Errors);
         }
 
-        // api/roles/assign-role-to-user
+        /// <summary>
+        /// Assigns a role to a user.
+        /// </summary>
+        /// <param name="assignRoleDTO">The user ID and role name to assign</param>
+        /// <returns>A confirmation message if the role is assigned</returns>
+        /// <response code="200">Role assigned successfully</response>
+        /// <response code="400">Invalid request or role assignment failed</response>
         [HttpPost("assign-role-to-user")]
         public async Task<IActionResult> AssignRoleToUser([FromBody] AssignRole assignRoleDTO)
         {
@@ -61,8 +77,14 @@ namespace homeCookAPI.Controllers
             _logger.LogInformation("Successfully assigned role '{RoleName}' to User ID {UserId}.", assignRoleDTO.RoleName, assignRoleDTO.UserId);
             return Ok(new { message = $"Role '{assignRoleDTO.RoleName}' assigned successfully." });
         }
-
-        // api/roles/Admin
+        
+        /// <summary>
+        /// Deletes a role by name.
+        /// </summary>
+        /// <param name="roleName">The name of the role to delete.</param>
+        /// <returns>A confirmation message if the role is deleted.</returns>
+        /// <response code="200">Role deleted successfully</response>
+        /// <response code="400">Invalid request or deletion failed</response>
         [HttpDelete("{roleName}")]
         public async Task<IActionResult> DeleteRole(string roleName)
         {
