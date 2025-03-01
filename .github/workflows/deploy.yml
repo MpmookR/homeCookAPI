@@ -54,7 +54,9 @@ jobs:
           echo "Setting environment variables..."
           echo "DATABASE_CONNECTION=${{ secrets.DATABASE_CONNECTION }}" >> $GITHUB_ENV
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
+          echo "JWT_ISSUER=${{ secrets.JWT_ISSUER }}" >> $GITHUB_ENV  
           echo "EMAIL_SENDER=${{ secrets.EMAIL_SENDER }}" >> $GITHUB_ENV
+
 
       - name: Deploy to Production Server
         run: |
