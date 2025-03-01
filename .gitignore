@@ -1,0 +1,6 @@
+# Ignore build and debug files
+obj/
+bin/
+*.cache
+*.pdb
+

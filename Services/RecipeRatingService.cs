@@ -96,8 +96,8 @@ public class RecipeRatingService : IRecipeRatingService
         return new RecipeRatingDTO
         {
             RecipeRatingId = rating.RecipeRatingId,
-            UserId = rating.UserId,
-            UserName = rating.User?.FullName,
+            // UserId = rating.UserId,
+            // UserName = rating.User?.FullName,
             RecipeId = rating.RecipeId,
             Rating = rating.Rating
         };

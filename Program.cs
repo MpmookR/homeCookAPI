@@ -6,13 +6,14 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //Ilogger
 builder.Logging.ClearProviders();
-builder.Logging.AddConsole();  
-builder.Logging.AddDebug();    
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 // Retrieve connection string from appsettings.json
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -51,8 +52,8 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles; // ✅ Fixes self-referencing issues
         options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull; // ✅ Removes null values
-        options.JsonSerializerOptions.WriteIndented = true; 
-        options.JsonSerializerOptions.PropertyNamingPolicy = null; 
+        options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
     });
 
 
@@ -72,7 +73,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Issuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
     };
 });
 
@@ -93,7 +94,50 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// CORS: prevents unauthorized frontend apps from calling API
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins",
+        policy =>
+        {
+            policy.WithOrigins("https://yourfrontend.com") // frontend URL will be replace later
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+});
+
+// Add Rate Limiting
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(options =>
+{
+    options.GeneralRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "*", // Applies to all endpoints
+            Limit = 100, // 100 requests
+            Period = "10m" // Every 10 minutes
+        }
+    };
+});
+builder.Services.AddInMemoryRateLimiting();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+
 var app = builder.Build();
+
+// Configure the HTTP request pipeline
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection(); // Enforces HTTPS in production
+}
+
+app.UseCors("AllowSpecificOrigins");
+
+app.UseIpRateLimiting();
+
+// Enable Authentication & Authorization Middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -106,10 +150,6 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = "api-docs"; // Accessible at /api-docs
     });
 }
-
-// Enable Authentication & Authorization Middleware
-app.UseAuthentication();
-app.UseAuthorization();
 
 // Map Controllers (REST API routes)
 app.MapControllers();
