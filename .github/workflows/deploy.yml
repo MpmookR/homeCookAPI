@@ -49,9 +49,11 @@ jobs:
       - name: Set Environment Variables
         run: |
           echo "DATABASE_CONNECTION=${{ secrets.DATABASE_CONNECTION }}" >> $GITHUB_ENV
+          echo "SMTP_SERVER=${{ secrets.SMTP_SERVER }}" >> $GITHUB_ENV
+          echo "SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}" >> $GITHUB_ENV
+          echo "SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}" >> $GITHUB_ENV
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
           echo "JWT_ISSUER=${{ secrets.JWT_ISSUER }}" >> $GITHUB_ENV
-          echo "EMAIL_SENDER=${{ secrets.EMAIL_SENDER }}" >> $GITHUB_ENV
 
       - name: Publish Application
         run: dotnet publish -c Release -o ./publish

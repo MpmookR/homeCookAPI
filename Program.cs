@@ -10,25 +10,46 @@ using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Ilogger
+// Logger 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
-// Retrieve connection string from appsettings.json
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("Connection")));
 
-// Identity service
+// Retrieve Environment Variables
+string databaseConnection = Environment.GetEnvironmentVariable("DATABASE_CONNECTION") ?? builder.Configuration.GetConnectionString("Connection");
+string smtpServer = Environment.GetEnvironmentVariable("SMTP_SERVER") ?? builder.Configuration["EmailSettings:SmtpServer"];
+string smtpUsername = Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? builder.Configuration["EmailSettings:SmtpUsername"];
+string smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? builder.Configuration["EmailSettings:SmtpPassword"];
+string jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? builder.Configuration["Jwt:Key"];
+// var jwtKey = "ThisIsMySuperSecureKeyWithAtLeast32Chars!";
+string jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? builder.Configuration["Jwt:Issuer"];
+
+// Debugging Logs
+Console.WriteLine($"🔹 DATABASE_CONNECTION = {databaseConnection}");
+Console.WriteLine($"🔹 SMTP_SERVER = {smtpServer}");
+Console.WriteLine($"🔹 JWT Key Length = {jwtKey.Length}");
+Console.WriteLine($"🔹 JWT Issuer = {jwtIssuer}");
+
+// Database Connection
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(databaseConnection));
+
+// Identity Service - User Management
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Register EmailSettings & email service
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+// Register Email Settings & Service
+builder.Services.Configure<EmailSettings>(options =>
+{
+    options.SmtpServer = smtpServer;
+    options.SmtpUsername = smtpUsername;
+    options.SmtpPassword = smtpPassword;
+});
 builder.Services.AddScoped<EmailService>();
 
-//Repositories (Dependency Injection)
+// Dependency Injection: Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<ISavedRecipeRepository, SavedRecipeRepository>();
@@ -37,7 +58,7 @@ builder.Services.AddScoped<ILikeRepository, LikeRepository>();
 builder.Services.AddScoped<IRecipeRatingRepository, RecipeRatingRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
-//Services: Business Logic Layer
+//Dependency Injection: Services (Business Logic)
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
 builder.Services.AddScoped<ISavedRecipeService, SavedRecipeService>();
@@ -46,18 +67,17 @@ builder.Services.AddScoped<ILikeService, LikeService>();
 builder.Services.AddScoped<IRecipeRatingService, RecipeRatingService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 
-//  Controllers & JSON Options
+// Configure JSON Serialization Options
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles; // ✅ Fixes self-referencing issues
-        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull; // ✅ Removes null values
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
         options.JsonSerializerOptions.WriteIndented = true;
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
     });
 
-
-// JWT Authentication
+// JWT Authentication Setup 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -65,19 +85,29 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
+
+    Console.WriteLine($"JWT Key Length Used in Signing: {keyBytes.Length} characters");
+
+    if (keyBytes.Length < 32)
+    {
+        throw new Exception("JWT Key is too short! It must be at least 32 characters.");
+    }
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Issuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtIssuer,
+        IssuerSigningKey = new SymmetricSecurityKey(keyBytes) 
     };
 });
 
-//  Swagger service
+
+// Swagger Configuration (API Documentation)
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -87,26 +117,25 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API Documentation for HomeCookAPI",
         Contact = new OpenApiContact
         {
-            Name = "Your Name",
-            Email = "your.email@example.com",
+            Name = "Mook Rattana",
+            Email = "mpmookr@gmail.com",
             Url = new Uri("https://github.com/MpmookR/homeCookAPI")
         }
     });
 });
 
-// CORS: prevents unauthorized frontend apps from calling API
+// CORS Configuration - Allow Specific Frontend Access
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigins",
-        policy =>
-        {
-            policy.WithOrigins("https://yourfrontend.com") // frontend URL will be replace later
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        });
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins("https://yourfrontend.com") //frontend URL
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
 });
 
-// Add Rate Limiting
+// Rate Limiting Prevent - API Abuse
 builder.Services.AddMemoryCache();
 builder.Services.Configure<IpRateLimitOptions>(options =>
 {
@@ -115,7 +144,7 @@ builder.Services.Configure<IpRateLimitOptions>(options =>
         new RateLimitRule
         {
             Endpoint = "*", // Applies to all endpoints
-            Limit = 100, // 100 requests
+            Limit = 100, // 100 requests max
             Period = "10m" // Every 10 minutes
         }
     };
@@ -125,24 +154,25 @@ builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>()
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Ensure HTTPS in Production
 if (!app.Environment.IsDevelopment())
 {
-    app.UseHttpsRedirection(); // Enforces HTTPS in production
+    app.UseHttpsRedirection();
 }
 
+// Middleware 
 app.UseCors("AllowSpecificOrigins");
 
+// Enable Rate Limiting
 app.UseIpRateLimiting();
 
 // Enable Authentication & Authorization Middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Configure the HTTP request pipeline
+// Enable Swagger in Development Mode
 if (app.Environment.IsDevelopment())
 {
-    // Enable Swagger in Development
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -151,7 +181,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Map Controllers (REST API routes)
+// Map API Endpoints
 app.MapControllers();
 
 app.Run();
