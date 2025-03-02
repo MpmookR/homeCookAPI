@@ -330,16 +330,16 @@
         <member name="M:homeCookAPI.Migrations.RemoveCustomUserId.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
-        <member name="T:homeCookAPI.Migrations.EnableCascadeDelete_Clean">
+        <member name="T:homeCookAPI.Migrations.InitialSchemaFix">
             <inheritdoc />
         </member>
-        <member name="M:homeCookAPI.Migrations.EnableCascadeDelete_Clean.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+        <member name="M:homeCookAPI.Migrations.InitialSchemaFix.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
             <inheritdoc />
         </member>
-        <member name="M:homeCookAPI.Migrations.EnableCascadeDelete_Clean.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+        <member name="M:homeCookAPI.Migrations.InitialSchemaFix.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
             <inheritdoc />
         </member>
-        <member name="M:homeCookAPI.Migrations.EnableCascadeDelete_Clean.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+        <member name="M:homeCookAPI.Migrations.InitialSchemaFix.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
     </members>

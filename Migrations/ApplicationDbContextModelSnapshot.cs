@@ -166,6 +166,7 @@ namespace homeCookAPI.Migrations
 
                     b.Property<string>("FullName")
                         .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("JoinDate")
@@ -225,11 +226,9 @@ namespace homeCookAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Content")
                         .IsRequired()
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -242,11 +241,10 @@ namespace homeCookAPI.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("CommentId");
-
-                    b.HasIndex("ApplicationUserId");
 
                     b.HasIndex("ParentCommentId");
 
@@ -254,7 +252,7 @@ namespace homeCookAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("homeCookAPI.Models.Like", b =>
@@ -270,6 +268,7 @@ namespace homeCookAPI.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("LikeId");
@@ -278,7 +277,7 @@ namespace homeCookAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Likes", (string)null);
+                    b.ToTable("Likes");
                 });
 
             modelBuilder.Entity("homeCookAPI.Models.Recipe", b =>
@@ -299,7 +298,6 @@ namespace homeCookAPI.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Image")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Ingredients")
@@ -308,20 +306,23 @@ namespace homeCookAPI.Migrations
 
                     b.Property<string>("Intro")
                         .IsRequired()
+                        .HasMaxLength(300)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("RecipeId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Recipes", (string)null);
+                    b.ToTable("Recipes");
                 });
 
             modelBuilder.Entity("homeCookAPI.Models.RecipeRating", b =>
@@ -329,9 +330,6 @@ namespace homeCookAPI.Migrations
                     b.Property<int>("RecipeRatingId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("Rating")
                         .HasColumnType("INTEGER");
@@ -345,13 +343,11 @@ namespace homeCookAPI.Migrations
 
                     b.HasKey("RecipeRatingId");
 
-                    b.HasIndex("ApplicationUserId");
-
                     b.HasIndex("RecipeId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RecipeRatings", (string)null);
+                    b.ToTable("RecipeRatings");
                 });
 
             modelBuilder.Entity("homeCookAPI.Models.SavedRecipe", b =>
@@ -360,9 +356,6 @@ namespace homeCookAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -370,17 +363,16 @@ namespace homeCookAPI.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("SavedRecipeId");
-
-                    b.HasIndex("ApplicationUserId");
 
                     b.HasIndex("RecipeId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("SavedRecipes", (string)null);
+                    b.ToTable("SavedRecipes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -436,10 +428,6 @@ namespace homeCookAPI.Migrations
 
             modelBuilder.Entity("homeCookAPI.Models.Comment", b =>
                 {
-                    b.HasOne("homeCookAPI.Models.ApplicationUser", null)
-                        .WithMany("Comments")
-                        .HasForeignKey("ApplicationUserId");
-
                     b.HasOne("homeCookAPI.Models.Comment", "ParentComment")
                         .WithMany("Replies")
                         .HasForeignKey("ParentCommentId");
@@ -451,9 +439,10 @@ namespace homeCookAPI.Migrations
                         .IsRequired();
 
                     b.HasOne("homeCookAPI.Models.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("Comments")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("ParentComment");
 
@@ -471,9 +460,10 @@ namespace homeCookAPI.Migrations
                         .IsRequired();
 
                     b.HasOne("homeCookAPI.Models.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("Likes")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Recipe");
 
@@ -483,18 +473,16 @@ namespace homeCookAPI.Migrations
             modelBuilder.Entity("homeCookAPI.Models.Recipe", b =>
                 {
                     b.HasOne("homeCookAPI.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+                        .WithMany("Recipes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("homeCookAPI.Models.RecipeRating", b =>
                 {
-                    b.HasOne("homeCookAPI.Models.ApplicationUser", null)
-                        .WithMany("Ratings")
-                        .HasForeignKey("ApplicationUserId");
-
                     b.HasOne("homeCookAPI.Models.Recipe", "Recipe")
                         .WithMany("Ratings")
                         .HasForeignKey("RecipeId")
@@ -502,7 +490,7 @@ namespace homeCookAPI.Migrations
                         .IsRequired();
 
                     b.HasOne("homeCookAPI.Models.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("RecipeRatings")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -514,10 +502,6 @@ namespace homeCookAPI.Migrations
 
             modelBuilder.Entity("homeCookAPI.Models.SavedRecipe", b =>
                 {
-                    b.HasOne("homeCookAPI.Models.ApplicationUser", null)
-                        .WithMany("SavedRecipes")
-                        .HasForeignKey("ApplicationUserId");
-
                     b.HasOne("homeCookAPI.Models.Recipe", "Recipe")
                         .WithMany("SavedRecipes")
                         .HasForeignKey("RecipeId")
@@ -525,9 +509,10 @@ namespace homeCookAPI.Migrations
                         .IsRequired();
 
                     b.HasOne("homeCookAPI.Models.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("SavedRecipes")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Recipe");
 
@@ -538,7 +523,11 @@ namespace homeCookAPI.Migrations
                 {
                     b.Navigation("Comments");
 
-                    b.Navigation("Ratings");
+                    b.Navigation("Likes");
+
+                    b.Navigation("RecipeRatings");
+
+                    b.Navigation("Recipes");
 
                     b.Navigation("SavedRecipes");
                 });

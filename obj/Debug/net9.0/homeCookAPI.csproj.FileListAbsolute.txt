@@ -314,3 +314,5 @@
 /Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/obj/Debug/net9.0/homeCookAPI.pdb
 /Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/obj/Debug/net9.0/homeCookAPI.genruntimeconfig.cache
 /Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/obj/Debug/net9.0/ref/homeCookAPI.dll
+/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/bin/Debug/net9.0/DotNetEnv.dll
+/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/bin/Debug/net9.0/Sprache.dll

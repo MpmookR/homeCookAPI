@@ -3,4 +3,6 @@ obj/
 bin/
 *.cache
 *.pdb
+.env
+
 

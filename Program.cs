@@ -7,13 +7,40 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using AspNetCoreRateLimit;
+using DotNetEnv;
+
+Env.Load(); // Load .env file automatically
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load environment variables
+builder.Configuration.AddEnvironmentVariables();
 
 //Ilogger
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
+
+// Environment Variables
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "https://localhost:5057";
+var emailSender = Environment.GetEnvironmentVariable("EMAIL_SENDER") ?? "";
+var smtpServer = Environment.GetEnvironmentVariable("SMTP_SERVER") ?? "";
+var smtpUsername = Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? "";
+var smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? "";
+var dbConnection = Environment.GetEnvironmentVariable("DATABASE_CONNECTION") ?? "Data Source=homeCook.db";
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? "";
+
+Console.WriteLine($"🔍 JWT_ISSUER: {Environment.GetEnvironmentVariable("JWT_ISSUER")}");
+Console.WriteLine($"🔍 DATABASE_CONNECTION: {Environment.GetEnvironmentVariable("DATABASE_CONNECTION")}");
+Console.WriteLine($"🔍 JWT_KEY: {Environment.GetEnvironmentVariable("JWT_KEY")}");
+
+// Override config with environment variables
+builder.Configuration["Jwt:Issuer"] = jwtIssuer;
+builder.Configuration["EmailSettings:SmtpServer"] = smtpServer;
+builder.Configuration["EmailSettings:SmtpUsername"] = smtpUsername;
+builder.Configuration["EmailSettings:SmtpPassword"] = smtpPassword;
+builder.Configuration["ConnectionStrings:Connection"] = dbConnection;
+builder.Configuration["Jwt:Key"] = jwtKey;
 
 // Retrieve connection string from appsettings.json
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -73,7 +100,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Issuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
     };
 });
 
@@ -92,6 +119,31 @@ builder.Services.AddSwaggerGen(c =>
             Url = new Uri("https://github.com/MpmookR/homeCookAPI")
         }
     });
+
+    // Protect Swagger in production
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer {your JWT token}'",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
 });
 
 // CORS: prevents unauthorized frontend apps from calling API
@@ -100,7 +152,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigins",
         policy =>
         {
-            policy.WithOrigins("https://yourfrontend.com") // frontend URL will be replace later
+            policy.WithOrigins("https://yourfrontend.com") // replace later
                   .AllowAnyMethod()
                   .AllowAnyHeader();
         });
@@ -129,10 +181,7 @@ var app = builder.Build();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Configure the HTTP request pipeline
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection(); // Enforces HTTPS in production
-}
+app.UseHttpsRedirection();
 
 app.UseCors("AllowSpecificOrigins");
 
@@ -142,10 +191,18 @@ app.UseIpRateLimiting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Configure the HTTP request pipeline
+// Configure Swagger UI (Restrict in production)
 if (app.Environment.IsDevelopment())
 {
-    // Enable Swagger in Development
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "HomeCookAPI v1");
+        c.RoutePrefix = "api-docs"; // Accessible at /api-docs
+    });
+}
+else
+{
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -156,5 +213,4 @@ if (app.Environment.IsDevelopment())
 
 // Map Controllers (REST API routes)
 app.MapControllers();
-
 app.Run();
