@@ -30,9 +30,9 @@ var smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? "";
 var dbConnection = Environment.GetEnvironmentVariable("DATABASE_CONNECTION") ?? "Data Source=homeCook.db";
 var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? "";
 
-Console.WriteLine($"🔍 JWT_ISSUER: {Environment.GetEnvironmentVariable("JWT_ISSUER")}");
-Console.WriteLine($"🔍 DATABASE_CONNECTION: {Environment.GetEnvironmentVariable("DATABASE_CONNECTION")}");
-Console.WriteLine($"🔍 JWT_KEY: {Environment.GetEnvironmentVariable("JWT_KEY")}");
+Console.WriteLine($"JWT_ISSUER: {Environment.GetEnvironmentVariable("JWT_ISSUER")}");
+Console.WriteLine($"DATABASE_CONNECTION: {Environment.GetEnvironmentVariable("DATABASE_CONNECTION")}");
+Console.WriteLine($"JWT_KEY: {Environment.GetEnvironmentVariable("JWT_KEY")}");
 
 // Override config with environment variables
 builder.Configuration["Jwt:Issuer"] = jwtIssuer;
