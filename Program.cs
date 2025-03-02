@@ -125,6 +125,9 @@ builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>()
 
 var app = builder.Build();
 
+//Global Exception Handling Middleware
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 // Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
