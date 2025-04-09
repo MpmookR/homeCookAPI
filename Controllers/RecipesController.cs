@@ -31,7 +31,7 @@ namespace homeCookAPI.Controllers
             var recipes = await _recipeService.GetAllRecipesAsync();
 
             _logger.LogInformation("Successfully retrieved {Count} recipes.", recipes.Count());
-            return Ok(recipes);
+            return Ok(recipes); //HTTP 200
         }
 
         /// <summary>

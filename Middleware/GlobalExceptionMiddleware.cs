@@ -49,7 +49,7 @@ public class GlobalExceptionMiddleware
             message = "An error occurred while processing your request.",
             errorId,  // Include error ID for debugging purposes
             statusCode,
-            exceptionMessage = exception.Message // ⚠️ Remove this in production for security
+            exceptionMessage = exception.Message // Remove this in production for security
         };
 
         response.StatusCode = statusCode;

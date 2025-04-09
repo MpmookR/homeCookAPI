@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/homeCookAPI.csproj": {}
+    "/Users/mykrattana/Desktop/WebDev/courseWork/cw2/webapp/backend/homeCookAPI.csproj": {}
   },
   "projects": {
-    "/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/homeCookAPI.csproj": {
+    "/Users/mykrattana/Desktop/WebDev/courseWork/cw2/webapp/backend/homeCookAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/homeCookAPI.csproj",
+        "projectUniqueName": "/Users/mykrattana/Desktop/WebDev/courseWork/cw2/webapp/backend/homeCookAPI.csproj",
         "projectName": "homeCookAPI",
-        "projectPath": "/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/homeCookAPI.csproj",
+        "projectPath": "/Users/mykrattana/Desktop/WebDev/courseWork/cw2/webapp/backend/homeCookAPI.csproj",
         "packagesPath": "/Users/mykrattana/.nuget/packages/",
-        "outputPath": "/Users/mykrattana/Desktop/WebDev/courseWork/api/homeCookAPI/obj/",
+        "outputPath": "/Users/mykrattana/Desktop/WebDev/courseWork/cw2/webapp/backend/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/mykrattana/.nuget/NuGet/NuGet.Config"
