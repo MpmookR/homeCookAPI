@@ -52,8 +52,15 @@ namespace homeCookAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<SavedRecipeDTO>> PostSavedRecipe([FromBody] SavedRecipeDTO request)
         {
+            // Log the incoming request data
+            // _logger.LogInformation("Incoming request body: RecipeId = {RecipeId}", request.RecipeId);
+
+            if (request.RecipeId == 0)
+            {
+                // _logger.LogWarning("RecipeId is missing or 0!");
+            }
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); //Get UserId from authentication
-            _logger.LogInformation("User {UserId} is saving recipe {RecipeId}", userId, request.RecipeId);
+            // _logger.LogInformation("User {UserId} is saving recipe {RecipeId}", userId, request.RecipeId);
 
             try
             {
@@ -66,7 +73,7 @@ namespace homeCookAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        
+
         /// <summary>
         /// Removes a saved recipe for the logged-in user
         /// </summary>

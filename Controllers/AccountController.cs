@@ -165,6 +165,7 @@ namespace homeCookAPI.Controllers
         /// <response code="200">User deleted successfully</response>
         /// <response code="404">User not found</response>
         [Authorize(Roles = "SuperAdmin")]
+        // [Authorize]
         [HttpDelete("users/{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {

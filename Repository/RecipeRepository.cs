@@ -26,6 +26,7 @@ public async Task<Recipe?> GetByIdAsync(int id)
     //Ensures all related data is available for MapToDTO()
     return await _context.Recipes
         .Where(r => r.RecipeId == id)
+        .Include(r => r.User)
         .Include(r => r.Comments) 
         .Include(r => r.Likes) 
         .Include(r => r.SavedRecipes) 

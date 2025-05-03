@@ -12,8 +12,14 @@ public class UserRepository : IUserRepository
     }
 
     // Methods returning ApplicationUser (needed for Identity)
-    public async Task<ApplicationUser> GetByIdEntityAsync(string userId) =>
-        await _userManager.FindByIdAsync(userId);
+    public async Task<ApplicationUser> GetByIdEntityAsync(string userId)
+    {
+        return await _userManager.Users
+            .Include(u => u.Recipes)
+            .Include(u => u.Likes)
+            .Include(u => u.SavedRecipes)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+    }
 
     public async Task<ApplicationUser> GetByEmailEntityAsync(string email) =>
         await _userManager.FindByEmailAsync(email);
@@ -58,25 +64,32 @@ public class UserRepository : IUserRepository
     }
 
     public async Task<IEnumerable<UserDTO>> GetAllUsersWithRolesAsync()
+{
+    var users = await _userManager.Users
+        .Include(u => u.Recipes)
+        .Include(u => u.Likes)
+        .ToListAsync();
+
+    var userDTOs = new List<UserDTO>();
+
+    foreach (var user in users)
     {
-        var users = await _userManager.Users.ToListAsync();
-        var userDTOs = new List<UserDTO>();
-
-        foreach (var user in users)
+        var roles = await _userManager.GetRolesAsync(user);
+        userDTOs.Add(new UserDTO
         {
-            var roles = await _userManager.GetRolesAsync(user);
-            userDTOs.Add(new UserDTO
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                JoinDate = user.JoinDate,
-                Roles = roles.ToList()
-            });
-        }
-
-        return userDTOs;
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            JoinDate = user.JoinDate,
+            Roles = roles.ToList(),
+            TotalRecipes = user.Recipes.Count,
+            TotalLikes = user.Likes.Count
+        });
     }
+
+    return userDTOs;
+}
+
 
     public async Task<IdentityResult> CreateAsync(ApplicationUser user, string password) =>
         await _userManager.CreateAsync(user, password);

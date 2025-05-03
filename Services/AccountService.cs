@@ -108,7 +108,11 @@ public class AccountService : IAccountService
                 FullName = user.FullName,
                 Email = user.Email,
                 JoinDate = user.JoinDate,
-                Roles = roles.ToList()
+                Roles = roles.ToList(),
+                ProfileImage = user.ProfileImage,
+                TotalRecipes = user.Recipes.Count,
+                TotalLikes = user.Likes.Count,
+                TotalSavedRecipes = user.SavedRecipes?.Count ?? 0
             });
         }
 
@@ -129,7 +133,11 @@ public class AccountService : IAccountService
             FullName = user.FullName,
             Email = user.Email,
             JoinDate = user.JoinDate,
-            Roles = roles.ToList() 
+            Roles = roles.ToList(),
+            ProfileImage = user.ProfileImage,
+            TotalRecipes = user.Recipes.Count,         
+            TotalLikes = user.Likes.Count,
+            TotalSavedRecipes = user.SavedRecipes?.Count ?? 0            
         };
     }
 

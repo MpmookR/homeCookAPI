@@ -41,7 +41,7 @@ namespace homeCookAPI.Controllers
         /// <returns>The details of the requested recipe.</returns>
         /// <response code="200">Returns the requested recipe</response>
         /// <response code="404">Recipe not found</response>        
-        [HttpGet("{id}")]    
+        [HttpGet("{id}")]
         public async Task<ActionResult<RecipeDTO>> GetRecipe(int id)
         {
             _logger.LogInformation("Fetching recipe with ID: {RecipeId}", id);
@@ -57,7 +57,7 @@ namespace homeCookAPI.Controllers
                 return NotFound(new { message = ex.Message });
             }
         }
-        
+
         /// <summary>
         /// Updates an existing recipe.
         /// </summary>
@@ -73,7 +73,7 @@ namespace homeCookAPI.Controllers
         {
             _logger.LogInformation("Updating recipe with ID: {RecipeId}", id);
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
+
             try
             {
                 var updatedRecipe = await _recipeService.UpdateRecipeAsync(id, recipeDTO, userId);
@@ -88,7 +88,7 @@ namespace homeCookAPI.Controllers
             catch (UnauthorizedAccessException ex)
             {
                 _logger.LogWarning(ex.Message);
-                return Forbid(ex.Message); 
+                return Forbid(ex.Message);
             }
         }
 
@@ -103,10 +103,14 @@ namespace homeCookAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<RecipeDTO>> PostRecipe(RecipeDTO recipeDTO)
         {
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // From token!
             _logger.LogInformation("Creating a new recipe for User ID: {UserId}", recipeDTO.UserId);
             try
             {
+                recipeDTO.UserId = userId; // Override whatever was sent
                 var newRecipe = await _recipeService.AddRecipeAsync(recipeDTO);
+
                 _logger.LogInformation("Recipe created successfully with ID: {RecipeId}", newRecipe.RecipeId);
                 return CreatedAtAction(nameof(GetRecipe), new { id = newRecipe.RecipeId }, newRecipe);
             }
@@ -127,29 +131,43 @@ namespace homeCookAPI.Controllers
         /// <response code="403">Unauthorized access</response>
         [Authorize] // Any logged-in user can attempt this action
         [HttpDelete("{recipeId}")]
-        public async Task<IActionResult> DeleteRecipe(int RecipeId)
+        public async Task<IActionResult> DeleteRecipe(int recipeId)
+        {
+            _logger.LogInformation("Attempting to delete recipe with ID: {RecipeId}", recipeId);
+
+            // Extract user ID from token (mapped via ClaimTypes.NameIdentifier)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
             {
-                _logger.LogInformation("Attempting to delete recipe with ID: {RecipeId}", RecipeId);
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
-
-                try
-                {
-                    await _recipeService.DeleteRecipeAsync(RecipeId, userId, isAdmin);
-                    _logger.LogInformation("Recipe deleted successfully with ID: {RecipeId} by User ID: {UserId}", RecipeId, userId);
-                    return Ok(new { message = "Recipe deleted successfully!" });
-                }
-                catch (KeyNotFoundException ex)
-                {
-                    _logger.LogWarning(ex.Message);
-                    return NotFound(new { message = ex.Message });
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    _logger.LogWarning(ex.Message);
-                    return Forbid(ex.Message); 
-
-                }
+                _logger.LogWarning("No UserId found in token.");
+                return Unauthorized(new { message = "User ID not found in token." });
             }
+
+            // Check if user has Admin or SuperAdmin role
+            var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+
+            var roles = User.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value);
+            _logger.LogInformation("👤 User ID: {UserId}, Roles: [{Roles}]", userId, string.Join(", ", roles));
+
+            try
+            {
+                await _recipeService.DeleteRecipeAsync(recipeId, userId, isAdmin);
+
+                _logger.LogInformation("Recipe {RecipeId} deleted by user {UserId}", recipeId, userId);
+                return Ok(new { message = "Recipe deleted successfully!" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _logger.LogWarning("Recipe not found: {Message}", ex.Message);
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning("Unauthorized delete attempt by {UserId}: {Message}", userId, ex.Message);
+                return StatusCode(403, new { message = ex.Message });
+            }
+        }
     }
 }

@@ -85,6 +85,7 @@ namespace homeCookAPI.Controllers
         /// <returns>A confirmation message if successful.</returns>
         /// <response code="200">Recipe unliked successfully</response>
         /// <response code="404">Recipe not found</response>
+        [Authorize]
         [HttpDelete("recipe/{recipeId}/user/{userId}")]
         public async Task<IActionResult> UnlikeRecipe(int recipeId, string userId)
         {

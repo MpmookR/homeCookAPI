@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using AspNetCoreRateLimit;
 using DotNetEnv;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 Env.Load(); // Load .env file automatically
 
@@ -149,11 +151,13 @@ builder.Services.AddSwaggerGen(c =>
 // CORS: prevents unauthorized frontend apps from calling API
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy => policy.WithOrigins("http://localhost:5173")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyMethod()
+              .WithHeaders("Authorization", "Content-Type")
+              .AllowCredentials());
 });
+
 
 // Add Rate Limiting
 builder.Services.AddMemoryCache();
@@ -171,6 +175,7 @@ builder.Services.Configure<IpRateLimitOptions>(options =>
 });
 builder.Services.AddInMemoryRateLimiting();
 builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap["nameid"] = ClaimTypes.NameIdentifier;
 
 var app = builder.Build();
 

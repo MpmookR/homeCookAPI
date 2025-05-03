@@ -6,7 +6,10 @@ public class SavedRecipeService : ISavedRecipeService
     private readonly IUserRepository _userRepository;
     private readonly IRecipeRepository _recipeRepository;
 
-    public SavedRecipeService(ISavedRecipeRepository savedRecipeRepository, IUserRepository userRepository, IRecipeRepository recipeRepository)
+
+    public SavedRecipeService(ISavedRecipeRepository savedRecipeRepository, 
+    IUserRepository userRepository, IRecipeRepository recipeRepository,
+        ILogger<SavedRecipeService> logger)
     {
         _savedRecipeRepository = savedRecipeRepository;
         _userRepository = userRepository;
@@ -21,12 +24,13 @@ public class SavedRecipeService : ISavedRecipeService
 
     public async Task<SavedRecipeDTO> SaveRecipeAsync(string userId, int recipeId)
     {
+
         if (!await _recipeRepository.ExistsAsync(recipeId))
             throw new KeyNotFoundException($"Recipe with ID {recipeId} not found.");
 
         if (await _savedRecipeRepository.ExistsAsync(userId, recipeId))
             throw new InvalidOperationException("Recipe is already saved by this user.");
-
+    
         var savedRecipe = new SavedRecipe
         {
             UserId = userId,
