@@ -184,10 +184,11 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Configure the HTTP request pipeline
 // app.UseHttpsRedirection();
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+//deploy
+// if (!app.Environment.IsDevelopment())
+// {
+//     app.UseHttpsRedirection();
+// }
 
 app.UseCors("AllowFrontend");
 
