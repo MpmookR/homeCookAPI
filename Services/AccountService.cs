@@ -39,7 +39,12 @@ public class AccountService : IAccountService
         // Generate Token
         var token = await _signInManager.UserManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(token));
-        var verificationLink = $"http://localhost:5057/api/account/verify-email?userId={user.Id}&token={encodedToken}";
+        //local test
+        // var verificationLink = $"http://localhost:5057/api/account/verify-email?userId={user.Id}&token={encodedToken}";
+
+        //deploy with render
+        var baseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL") ?? "http://localhost:5057";
+        var verificationLink = $"{baseUrl}/api/account/verify-email?userId={user.Id}&token={Uri.EscapeDataString(encodedToken)}";
 
         // Send Email
         await _emailService.SendEmailAsync(user.Email, "Verify Your Email",
