@@ -6,7 +6,7 @@ namespace homeCookAPI.Controllers
 {
     [Route("api/roles")]
     [ApiController]
-    [Authorize(Roles = "SuperAdmin")]  //only SuperAdmin can perform role feature
+    // [Authorize(Roles = "SuperAdmin")]  //only SuperAdmin can perform role feature
     public class RolesController : ControllerBase
     {
         private readonly IRoleService _roleService;
