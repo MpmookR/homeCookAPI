@@ -156,9 +156,10 @@ builder.Services.AddCors(options =>
             "http://localhost:5173",
             "https://zippy-cranachan-12b890.netlify.app"
             )
-              .AllowAnyMethod()
-              .WithHeaders("Authorization", "Content-Type")
-              .AllowCredentials());
+            .AllowAnyMethod()
+            //   .WithHeaders("Authorization", "Content-Type")
+            .AllowAnyHeader()
+            .AllowCredentials());
 });
 
 
@@ -186,12 +187,11 @@ var app = builder.Build();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Configure the HTTP request pipeline
-// app.UseHttpsRedirection();
 //deploy
-// if (!app.Environment.IsDevelopment())
-// {
-//     app.UseHttpsRedirection();
-// }
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection(); // Ensure HTTPS in production
+}
 
 app.UseCors("AllowFrontend");
 
